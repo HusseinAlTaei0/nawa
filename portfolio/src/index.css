@@ -1,0 +1,70 @@
+/* 1. استدعاء الخطوط من جوجل */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap');
+
+/* 2. تفعيل Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 3. تطبيق الخطوط الافتراضية */
+@layer base {
+  body {
+    @apply font-sans bg-dark text-white;
+    /* الخط الافتراضي مونتسيرات والخلفية داكنة */
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif;
+    /* العناوين بخط بلاي فير الفخم */
+  }
+}
+
+/* 4. إخفاء الماوس الافتراضي نهائياً (الحل الجذري) */
+* {
+  cursor: none !important;
+  /* يخفي السهم من كل العناصر بقوة */
+}
+
+/* استثناء: إظهار مؤشر الكتابة فقط عند الحقول النصية (لتحسين التجربة) */
+input,
+textarea,
+[contenteditable] {
+  cursor: text !important;
+}
+
+/* تحسين السكرول بار (Scrollbar) ليكون رفيعاً وداكناً */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* ... أكوادك السابقة ... */
+
+/* إضافة مهمة جداً: */
+body {
+  overflow-x: hidden;
+  /* هذا المكان الصحيح لمنع السكرول الأفقي */
+}
+
+/* إصلاح إضافي للتأكد من أن الـ Sticky يعمل */
+html,
+body {
+  scroll-behavior: smooth;
+}
