@@ -1,0 +1,31 @@
+# إعدادات النشر على Netlify لموقع NAWA
+# المشروع (Vite + React) موجود داخل المجلد الفرعي "portfolio" وليس في جذر الريبو،
+# لذلك نحدد base حتى يشغّل Netlify البناء من هناك.
+[build]
+  base    = "portfolio"          # مجلد المشروع داخل الريبو
+  command = "npm run build"      # أمر البناء (vite build)
+  publish = "dist"               # ناتج البناء (نسبي إلى base)
+
+[build.environment]
+  # Vite 8 يحتاج Node 20.19+ أو 22.12+
+  NODE_VERSION = "22"
+
+# SPA fallback: الموقع يستخدم react-router (مسار /works)،
+# فأي مسار غير موجود كملف يجب أن يعيد index.html بدل 404 (status 200 = rewrite).
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+# تعزيز أمني بسيط + كاش طويل للملفات المبنية (أسماؤها تحتوي hash)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
