@@ -1,0 +1,93 @@
+---
+/**
+ * صفحة الخدمات:
+ * الواجهة = المدار السداسي (التصميم A): الخدمات الست على زوايا سداسي الشعار حول نواة بيضاء مثل الشعار تماماً
+ * ثم قائمة الخدمات، طرق العمل، ونداء الختام.
+ */
+import Base from '../../../layouts/Base.astro';
+import SectionHead from '../../../components/SectionHead.astro';
+import Closing from '../../../components/Closing.astro';
+import { services } from '../../../data/services';
+import { servicesPage, processData, home } from '../../../data/pages';
+import { ui, path, gold } from '../../../i18n/ui';
+import { HEX, DISC } from '../../../lib/mark';
+import { LANGS, type Lang } from '../../../config/site';
+
+export function getStaticPaths() { return LANGS.map((lang) => ({ params: { lang } })); }
+const lang = Astro.params.lang as Lang;
+const t = ui[lang], c = servicesPage[lang], m = processData[lang].models;
+const items = services.map((s) => ({ name: s[lang].name, text: s[lang].outcome, href: path(lang, `services/${s.slug}`), more: t.more }));
+const pad = (i: number) => String(i + 1).padStart(2, '0');
+// السداسي بمقياس يجعل زواياه على نصف قطر 132 (viewBox ‎-200..200)، ومركزه في منتصف اللوحة
+const S = 1.029, HCX = 114.44, HCY = 129.3;
+---
+<Base lang={lang} title={c.title} description={c.lead}>
+  <section class="page-hero orbit-sec" data-orbit data-items={JSON.stringify(items)}>
+    <div class="wrap">
+      <div class="orbit" role="group" aria-label={c.eyebrow}>
+        <svg viewBox="-200 -200 400 400" aria-hidden="true">
+          <circle r="132" fill="none" stroke="#fff" stroke-opacity=".09" vector-effect="non-scaling-stroke" />
+          <circle r="178" fill="none" stroke="#fff" stroke-opacity=".05" vector-effect="non-scaling-stroke" />
+          <g transform={`scale(${S}) translate(${-HCX} ${-HCY})`}>
+            <path d={HEX} fill="none" stroke="#8F713D" vector-effect="non-scaling-stroke" />
+            <!-- النواة: قرص أبيض مصمت بنفس نسبة قرص الشعار -->
+            <circle cx={DISC.cx} cy={DISC.cy} r={DISC.r} fill="#fff" />
+          </g>
+        </svg>
+        {services.map((s, i) => (
+          <button type="button" class:list={['node', i === 0 && 'on']} aria-label={s[lang].name} aria-pressed={i === 0 ? 'true' : 'false'}>
+            <i></i><span class="lab">{s[lang].short}</span>
+          </button>
+        ))}
+      </div>
+      <div class="orbit-side">
+        <div style="display:flex;flex-direction:column;gap:14px" data-reveal>
+          <p class="eyebrow">{c.eyebrow}</p>
+          <h1 set:html={gold(c.title)} />
+          <p class="lead">{c.lead}</p>
+        </div>
+        <div class="orbit-detail" aria-live="polite">
+          <p class="count"><bdi dir="ltr"><b class="cur">01</b> / {pad(services.length - 1)}</bdi></p>
+          <h2>{items[0].name}</h2>
+          <p class="txt">{items[0].text}</p>
+          <a class="tlink" href={items[0].href} aria-label={`${t.more}: ${items[0].name}`}>{t.more} <span class="arrow" aria-hidden="true">→</span></a>
+          <div class="orbit-nav">
+            <button class="rnd" type="button" data-step="-1" aria-label={t.prev}><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg></button>
+            <button class="rnd" type="button" data-step="1" aria-label={t.next}><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 3l5 5-5 5" /></svg></button>
+            <span class="hint">{c.hint}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section band">
+    <div class="wrap">
+      <SectionHead title={c.listTitle} />
+      <div class="svc-rows">
+        {services.map((s, i) => (
+          <a class="svc-row" href={path(lang, `services/${s.slug}`)} data-reveal>
+            <span class="idx"><bdi dir="ltr">{pad(i)}</bdi></span>
+            <h3>{s[lang].name}</h3>
+            <p>{s[lang].outcome}</p>
+            <span class="tlink">{t.more} <span class="arrow" aria-hidden="true">→</span></span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <SectionHead eyebrow={m.eyebrow} title={m.title} />
+      <div class="grid-3 hair" data-reveal>
+        {m.items.map((it) => <div><h3>{it.name}</h3><p>{it.text}</p></div>)}
+      </div>
+    </div>
+  </section>
+
+  <Closing lang={lang} title={home[lang].closing.title} text={home[lang].closing.text} />
+</Base>
+<script>
+  import '../../../scripts/orbit.ts';
+</script>

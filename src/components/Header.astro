@@ -1,0 +1,48 @@
+---
+/**
+ * الهيدر: الشعار + الروابط + تبديل اللغة + زر "ابدأ مشروعك".
+ * على الموبايل: زر قائمة يفتح قائمة بملء الشاشة. تبديل اللغة يذهب للصفحة المقابلة نفسها.
+ */
+import Mark from './Mark.astro';
+import PlanetButton from './PlanetButton.astro';
+import { ui, path, otherLang, switchLangPath } from '../i18n/ui';
+import { site, whatsappLink, type Lang } from '../config/site';
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const t = ui[lang];
+const other = otherLang(lang);
+const here = Astro.url.pathname;
+const links = [
+  { key: 'services', href: path(lang, 'services') },
+  { key: 'work', href: path(lang, 'work') },
+  { key: 'process', href: path(lang, 'process') },
+  { key: 'about', href: path(lang, 'about') },
+] as const;
+const isCurrent = (href: string) => here.startsWith(href);
+---
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href={path(lang)} aria-label={lang === 'ar' ? `${site.nameAr} · الصفحة الرئيسية` : `${site.name} home`}>
+      <Mark heavy />
+      <span class="wm">{lang === 'ar' ? site.nameAr : site.name}</span>
+    </a>
+    <nav class="site-nav" aria-label={lang === 'ar' ? 'التنقل الرئيسي' : 'Main'}>
+      {links.map((l) => <a href={l.href} aria-current={isCurrent(l.href) ? 'page' : undefined}>{t.nav[l.key]}</a>)}
+    </nav>
+    <div class="header-end">
+      <a class="lang-link" href={switchLangPath(here, other)} lang={other} hreflang={other} aria-label={t.langSwitchLabel} data-lang-switch>{t.langSwitch}</a>
+      <PlanetButton href={path(lang, 'contact')} label={t.cta} size="sm" />
+      <button class="burger" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label={t.menu} data-open={t.menu} data-close={t.close}><span></span></button>
+    </div>
+  </div>
+</header>
+<div class="mobile-menu" id="mobile-menu" inert>
+  <nav aria-label={lang === 'ar' ? 'قائمة الموبايل' : 'Mobile'}>
+    {links.map((l) => <a href={l.href} aria-current={isCurrent(l.href) ? 'page' : undefined}>{t.nav[l.key]}</a>)}
+    <a href={path(lang, 'contact')}>{t.nav.contact}</a>
+  </nav>
+  <div class="menu-end">
+    <PlanetButton href={path(lang, 'contact')} label={t.cta} />
+    <PlanetButton href={whatsappLink(t.waDefault)} label={t.whatsapp} variant="ghost" external />
+  </div>
+</div>

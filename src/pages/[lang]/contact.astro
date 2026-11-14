@@ -1,0 +1,90 @@
+---
+/**
+ * صفحة التواصل: واتساب أولاً، ثم نموذج قصير (Netlify Forms)، ثم بيانات التواصل.
+ * - data-netlify="true" + حقل form-name المخفي: هكذا يتعرف Netlify على النموذج وقت البناء
+ * - bot-field: حقل مخفي لصيد السبام
+ * - ?service=<slug> في الرابط يحدد الخدمة مسبقاً (قادم من صفحة الخدمة)
+ */
+import Base from '../../layouts/Base.astro';
+import PlanetButton from '../../components/PlanetButton.astro';
+import { contactPage } from '../../data/pages';
+import { services } from '../../data/services';
+import { ui, gold } from '../../i18n/ui';
+import { LANGS, site, whatsappLink, type Lang } from '../../config/site';
+
+export function getStaticPaths() { return LANGS.map((lang) => ({ params: { lang } })); }
+const lang = Astro.params.lang as Lang;
+const c = contactPage[lang], t = ui[lang];
+const formName = `contact-${lang}`;
+---
+<Base lang={lang} title={c.title} description={c.lead}>
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>{c.eyebrow}</p>
+      <h1 data-reveal style="--i:1" set:html={gold(c.title)} />
+      <p class="lead" data-reveal style="--i:2">{c.lead}</p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-block-start:0">
+    <div class="wrap contact-grid">
+      <div class="contact-side" data-reveal>
+        <div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start">
+          <h2 style="font-size:var(--fs-h3)">{c.waTitle}</h2>
+          <p>{c.waText}</p>
+          <PlanetButton href={whatsappLink(t.waDefault)} label={c.waBtn} external />
+        </div>
+        <dl>
+          <dt>{c.details.email}</dt><dd><a href={`mailto:${site.email}`}><bdi dir="ltr">{site.email}</bdi></a></dd>
+          <dt>{c.details.phone}</dt><dd><bdi dir="ltr">{site.phoneDisplay}</bdi></dd>
+          <dt>{c.details.address}</dt><dd>{site.address[lang]}</dd>
+          <dt>{c.details.hours}</dt><dd>{site.hours[lang]}</dd>
+        </dl>
+      </div>
+
+      <form class="form" name={formName} method="POST" action={Astro.url.pathname} data-netlify="true" netlify-honeypot="bot-field" data-contact novalidate
+        data-err-name={c.errors.name} data-err-phone={c.errors.phone} data-err-message={c.errors.message}
+        data-send={c.send} data-sending={c.sending} data-success={c.success} data-fail={c.fail} data-reveal>
+        <input type="hidden" name="form-name" value={formName} />
+        <input type="hidden" name="language" value={lang} />
+        <p class="hp"><label>Leave this empty <input name="bot-field" tabindex="-1" autocomplete="off" /></label></p>
+        <h2 style="font-size:var(--fs-h3)">{c.formTitle}</h2>
+
+        <div class="field">
+          <label for="f-name">{c.fields.name}</label>
+          <input id="f-name" name="name" type="text" autocomplete="name" required aria-describedby="err-name" />
+          <p class="err" id="err-name" role="alert"></p>
+        </div>
+        <div class="field">
+          <label for="f-company">{c.fields.company} <span class="opt">({c.fields.companyOpt})</span></label>
+          <input id="f-company" name="company" type="text" autocomplete="organization" />
+        </div>
+        <div class="field">
+          <label for="f-phone">{c.fields.phone}</label>
+          <input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" placeholder="+964" required aria-describedby="err-phone" />
+          <p class="err" id="err-phone" role="alert"></p>
+        </div>
+        <fieldset class="field">
+          <legend>{c.fields.service}</legend>
+          <div class="chips" style="margin-block-start:8px">
+            {services.map((s) => <label><input type="checkbox" name="service" value={s.slug} />{s[lang].name}</label>)}
+            <label><input type="checkbox" name="service" value="not-sure" />{c.fields.unsure}</label>
+          </div>
+        </fieldset>
+        <div class="field">
+          <label for="f-message">{c.fields.message}</label>
+          <textarea id="f-message" name="message" required aria-describedby="err-message"></textarea>
+          <p class="err" id="err-message" role="alert"></p>
+        </div>
+        <PlanetButton label={c.send} type="submit" />
+        <p class="form-status" role="status"></p>
+      </form>
+    </div>
+  </section>
+</Base>
+<script>
+  import '../../scripts/form.ts';
+  // تحديد الخدمة مسبقاً إذا جاء الزائر من صفحة خدمة (?service=automation)
+  const pre = new URLSearchParams(location.search).get('service');
+  if (pre) document.querySelector<HTMLInputElement>(`input[name="service"][value="${CSS.escape(pre)}"]`)?.setAttribute('checked', '');
+</script>

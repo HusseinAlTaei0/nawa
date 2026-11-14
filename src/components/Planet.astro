@@ -1,0 +1,22 @@
+---
+/**
+ * صورة كوكب واقعية بألوانها الطبيعية (كواكب التصميم القديم) مع ظل داخلي يعطيها عمقاً.
+ * الصور تُضغط تلقائياً إلى WebP بأحجام متعددة عبر astro:assets.
+ */
+import { Image } from 'astro:assets';
+import type { PlanetKey } from '../data/services';
+import jupiter from '../assets/planets/jupiter.webp';
+import violet from '../assets/planets/violet.webp';
+import earth from '../assets/planets/earth.webp';
+import saturn from '../assets/planets/saturn.webp';
+import mars from '../assets/planets/mars.webp';
+import moon from '../assets/planets/moon.webp';
+interface Props { name: PlanetKey; sizes?: string; eager?: boolean; }
+const { name, sizes = '(max-width: 700px) 60vw, 420px', eager = false } = Astro.props;
+const src = { jupiter, violet, earth, saturn, mars, moon }[name];
+const round = name !== 'saturn';
+---
+<span class={`planet p-${name}`} aria-hidden="true">
+  <Image src={src} alt="" widths={[320, 520, 800]} sizes={sizes} loading={eager ? 'eager' : 'lazy'} decoding="async" />
+  {round && <span class="shade"></span>}
+</span>

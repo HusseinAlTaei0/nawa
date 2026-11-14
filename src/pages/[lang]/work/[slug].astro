@@ -1,0 +1,50 @@
+---
+/** صفحة دراسة الحالة: بيانات المشروع + الأرقام + النص (المشكلة → النظام → النتيجة) من ملف Markdown */
+import { render } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import DraftTag from '../../../components/DraftTag.astro';
+import Closing from '../../../components/Closing.astro';
+import { workPage } from '../../../data/pages';
+import { services } from '../../../data/services';
+import { path } from '../../../i18n/ui';
+import { LANGS, type Lang } from '../../../config/site';
+import { getWork, workSlug, type WorkEntry } from '../../../lib/work';
+
+export async function getStaticPaths() {
+  const out: { params: { lang: Lang; slug: string }; props: { entry: WorkEntry } }[] = [];
+  for (const lang of LANGS) for (const entry of await getWork(lang)) out.push({ params: { lang, slug: workSlug(entry) }, props: { entry } });
+  return out;
+}
+const lang = Astro.params.lang as Lang;
+const { entry } = Astro.props as { entry: WorkEntry };
+const d = entry.data, L = workPage[lang].labels;
+const { Content } = await render(entry);
+const svc = services.find((s) => s.slug === d.service);
+---
+<Base lang={lang} title={d.title} description={d.summary} noindex={d.draft}>
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow"><a href={path(lang, 'work')}>{workPage[lang].eyebrow}</a> · {d.sector}</p>
+      {d.draft && <DraftTag lang={lang} />}
+      <h1>{d.title}</h1>
+      <p class="lead">{d.summary}</p>
+    </div>
+  </section>
+  <section class="section" style="padding-block-start:0">
+    <div class="wrap" style="display:flex;flex-direction:column;gap:clamp(32px,5vw,56px)">
+      <dl class="case-meta hair" style="margin:0">
+        <div><dt>{L.client}</dt><dd>{d.client}</dd></div>
+        <div><dt>{L.sector}</dt><dd>{d.sector}</dd></div>
+        <div><dt>{L.year}</dt><dd><bdi dir="ltr">{d.year}</bdi></dd></div>
+        <div><dt>{L.service}</dt><dd>{svc ? <a href={path(lang, `services/${svc.slug}`)} style="text-decoration:underline;text-underline-offset:4px">{svc[lang].name}</a> : d.service}</dd></div>
+      </dl>
+      {d.results.length > 0 && (
+        <div class="proof hair" style={`grid-template-columns:repeat(${Math.min(3, d.results.length)},minmax(0,1fr))`}>
+          {d.results.map((r) => <div><p class="v"><bdi>{r.value}</bdi></p><p>{r.label}</p></div>)}
+        </div>
+      )}
+      <div class="case-body"><Content /></div>
+    </div>
+  </section>
+  <Closing lang={lang} title={L.similar} />
+</Base>

@@ -1,31 +1,47 @@
-# إعدادات النشر على Netlify لموقع NAWA
-# المشروع (Vite + React) موجود داخل المجلد الفرعي "portfolio" وليس في جذر الريبو،
-# لذلك نحدد base حتى يشغّل Netlify البناء من هناك.
+# إعدادات النشر على Netlify لموقع NAWA (Astro ثابت في جذر الريبو)
+# ملاحظة مهمة: إذا كان "Base directory" في إعدادات الموقع على Netlify ما زال "portfolio"
+# فيجب تفريغه، لأن المجلد القديم انحذف.
 [build]
-  base    = "portfolio"          # مجلد المشروع داخل الريبو
-  command = "npm run build"      # أمر البناء (vite build)
-  publish = "dist"               # ناتج البناء (نسبي إلى base)
+  command = "npm run build"   # astro build
+  publish = "dist"            # ناتج البناء
 
 [build.environment]
-  # Vite 8 يحتاج Node 20.19+ أو 22.12+
   NODE_VERSION = "22"
 
-# SPA fallback: الموقع يستخدم react-router (مسار /works)،
-# فأي مسار غير موجود كملف يجب أن يعيد index.html بدل 404 (status 200 = rewrite).
-[[redirects]]
-  from   = "/*"
-  to     = "/index.html"
-  status = 200
+# في معاينات الـ PR و فروع التطوير نعرض المحتوى التجريبي (draft) حتى ترى القوالب ممتلئة.
+# الموقع الحي (production) لا يعرض أي أرقام أو مشاريع تجريبية.
+[context.deploy-preview.environment]
+  PUBLIC_SHOW_DRAFTS = "true"
+[context.branch-deploy.environment]
+  PUBLIC_SHOW_DRAFTS = "true"
 
-# تعزيز أمني بسيط + كاش طويل للملفات المبنية (أسماؤها تحتوي hash)
+# الصفحة الرئيسية: الزائر العربي يذهب إلى /ar/ والباقي إلى /en/ (الإنجليزية هي الافتراضية)
+[[redirects]]
+  from = "/"
+  to = "/ar/"
+  status = 302
+  force = true   # يوجد ملف index.html احتياطي في الجذر، و force يجعل التحويل يسبقه
+  conditions = { Language = ["ar"] }
+
+[[redirects]]
+  from = "/"
+  to = "/en/"
+  status = 302
+  force = true
+
+# رؤوس أمان لكل الصفحات
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    # سياسة المحتوى: كل شيء من نفس الدومين فقط. 'unsafe-inline' مطلوب لسكربتات Astro الصغيرة المضمّنة.
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
 
+# كاش طويل للملفات المبنية (أسماؤها تحتوي hash فلا تتغير)
 [[headers]]
-  for = "/assets/*"
+  for = "/_astro/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"

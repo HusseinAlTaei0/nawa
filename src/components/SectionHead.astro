@@ -1,0 +1,11 @@
+---
+/** رأس القسم: سطر صغير (eyebrow) + عنوان فيه عبارة ذهبية واحدة + فقرة تمهيدية اختيارية */
+import { gold } from '../i18n/ui';
+interface Props { eyebrow?: string; title: string; lead?: string; as?: 'h1' | 'h2'; }
+const { eyebrow, title, lead, as: Tag = 'h2' } = Astro.props;
+---
+<div class="section-head" data-reveal>
+  {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+  <Tag set:html={gold(title)} />
+  {lead && <p class="lead">{lead}</p>}
+</div>

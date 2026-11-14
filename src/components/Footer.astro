@@ -1,0 +1,53 @@
+---
+/** الفوتر: الشعار والشعار اللفظي، روابط الصفحات والخدمات، معلومات التواصل، وزر إيقاف الحركة */
+import Mark from './Mark.astro';
+import { ui, path } from '../i18n/ui';
+import { services } from '../data/services';
+import { site, whatsappLink, type Lang } from '../config/site';
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const t = ui[lang];
+const year = new Date().getFullYear();
+const social = Object.entries(site.social).filter(([, url]) => url);
+---
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-top">
+      <div>
+        <a class="brand" href={path(lang)}><Mark heavy /><span class="wm">{lang === 'ar' ? site.nameAr : site.name}</span></a>
+        <p class="footer-tag">{t.footer.tagline}</p>
+      </div>
+      <div>
+        <h2>{t.footer.explore}</h2>
+        <ul>
+          <li><a href={path(lang, 'services')}>{t.nav.services}</a></li>
+          <li><a href={path(lang, 'work')}>{t.nav.work}</a></li>
+          <li><a href={path(lang, 'process')}>{t.nav.process}</a></li>
+          <li><a href={path(lang, 'about')}>{t.nav.about}</a></li>
+          <li><a href={path(lang, 'contact')}>{t.nav.contact}</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>{t.footer.services}</h2>
+        <ul>{services.map((s) => <li><a href={path(lang, `services/${s.slug}`)}>{s[lang].name}</a></li>)}</ul>
+      </div>
+      <div>
+        <h2>{t.footer.contact}</h2>
+        <ul>
+          <li><a href={whatsappLink(t.waDefault)} target="_blank" rel="noopener noreferrer">{t.whatsapp}</a></li>
+          <li><a href={`mailto:${site.email}`}><bdi dir="ltr">{site.email}</bdi></a></li>
+          <li><span>{site.address[lang]}</span></li>
+          {social.map(([name, url]) => <li><a href={url} target="_blank" rel="noopener noreferrer" style="text-transform:capitalize">{name}</a></li>)}
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <bdi dir="ltr">{year}</bdi> {site.name}. {t.footer.rights} {t.footer.credits}</span>
+      <button class="motion-toggle" type="button" aria-label={t.footer.motionLabel} data-on={t.footer.motionOn} data-off={t.footer.motionOff}>{t.footer.motionOn}</button>
+    </div>
+  </div>
+</footer>
+<div class="action-bar">
+  <a href={whatsappLink(t.waDefault)} target="_blank" rel="noopener noreferrer"><span class="dot w"></span>{t.whatsapp}</a>
+  <a href={path(lang, 'contact')}><span class="dot"></span>{t.cta}</a>
+</div>
