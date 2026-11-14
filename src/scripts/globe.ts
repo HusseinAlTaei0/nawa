@@ -28,13 +28,14 @@ if (box) {
       const { default: createGlobe } = await import('cobe');
       const size = Math.round(box.clientWidth * Math.min(window.devicePixelRatio || 1, 1.5));
       // phi/theta يوجّهان الكرة حتى تكون بغداد في الواجهة
-      const basePhi = 4.03, theta = 0.42;
+      const basePhi = 4.03, theta = 0.5;
       let phi = basePhi, raf = 0, visible = true, t = 0;
       const globe = createGlobe(canvas, {
         devicePixelRatio: 1, width: size, height: size, phi, theta,
         dark: 1, diffuse: 1.1, mapSamples: 14000, mapBrightness: 4.2, mapBaseBrightness: 0.02,
         baseColor: [0.16, 0.16, 0.16], markerColor: GOLD, glowColor: [0.12, 0.1, 0.07],
-        markers: [{ location: BAGHDAD, size: 0.085 }, ...CITIES.map((c) => ({ location: c, size: 0.04 }))],
+        scale: 1.45, offset: [0, size * 0.16],
+        markers: [{ location: BAGHDAD, size: 0.06 }, ...CITIES.map((c) => ({ location: c, size: 0.028 }))],
         arcs: CITIES.map((c) => ({ from: BAGHDAD, to: c })),
         arcColor: GOLD, arcWidth: 0.5, arcHeight: 0.22, markerElevation: 0.01,
       });
@@ -42,7 +43,7 @@ if (box) {
       const frame = () => {
         raf = requestAnimationFrame(frame);
         t += 0.016;
-        phi = basePhi + Math.sin(t * 0.18) * 0.32; // تأرجح هادئ حول بغداد بدل دوران كامل
+        phi = basePhi + Math.sin(t * 0.18) * 0.22; // تأرجح هادئ حول بغداد بدل دوران كامل
         globe.update({ phi });
       };
       const start = () => { if (!raf && motionOn() && visible && !document.hidden) raf = requestAnimationFrame(frame); };

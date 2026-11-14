@@ -11,18 +11,19 @@ Update it here when a decision changes, not inside each agent.
 - Voice: serious, disciplined, calm confidence. Numbers over adjectives. Honest limits. Short sentences. No hype, no exclamation marks, no emoji.
 
 ## Site decisions (agreed with the owner)
-- Stack: Astro (static output) + React islands, Tailwind v4, GSAP / Motion, react-three-fiber only where needed. Hosted on Netlify.
+- Stack: Astro (static output), Tailwind v4, plain TypeScript modules in `src/scripts/` for every effect (Canvas 2D and CSS, no React or three.js), cobe for the globe. Hosted on Netlify.
 - Languages: English default, full Arabic (RTL). Routes `/en/...` and `/ar/...` with English slugs in both.
 - Pages: Home, Services (+ 6 detail pages), Work (+ case-study template), Process, About, Contact, 404.
 - Services (6, one per corner of the logo hexagon): AI Agents, Automation, Websites & Web Apps, ERP Systems, SaaS Products, Branding.
 - Content: templates with sample content flagged `draft: true`. Production never shows invented numbers, logos or testimonials.
 - Contact: Netlify Forms. WhatsApp is the primary channel.
 - Motion level: calm luxury, about 80% clarity and proof, 20% signature moments. One "wow" per page, and it must explain the offer.
+- Signature pieces already built: gold star cloud behind every page (`sky.ts`), gold point-cloud planet hero with pointer repel (`heroplanet.ts`), opening screen where the logo draws itself, service cards with real planet photos (`rail.ts`), hexagon orbit on the Services page (`orbit.ts`), eclipse language switch and moon cursor (`site.ts`), launch trail on form success (`form.ts`), Baghdad globe (`globe.ts`).
 
 ## Visual identity
 - Space: stars, planets, orbits, galaxies, shooting stars. Rendered quietly, never as sci-fi cliche.
 - Logo: a rounded hexagon outline around a solid disc ("a planet held in its orbit"). Never stretched, rotated, recoloured or mirrored.
-- Palette (no other hues, no blue, no purple):
+- Palette (no other hues, no blue, no purple; the one exception is the planet photos inside service cards, which keep their natural colours):
   - ground `#0A0A0A`, surfaces `#111111` / `#1A1A1A` / `#242424`, hairline `#2A2A2A` (decorative only), control borders `#666666` or lighter
   - text `#FFFFFF` (headings), `#EDEDED` (body), `#888888` (muted)
   - gold `#C5A463`, gold-deep `#8F713D`, gold-bright `#DDC288` (hover and focus ring)
@@ -38,10 +39,12 @@ Update it here when a decision changes, not inside each agent.
 - Durations: micro 150-250ms, reveals 700-900ms, transitions 900-1200ms, stagger 50-70ms.
 - No scroll-jacking, no tilt on cards or forms, never hide the native cursor.
 - At most one WebGL context in view. Pause off-screen and when the tab is hidden. DPR capped at 1.5 on mobile.
-- `prefers-reduced-motion`, `Save-Data`, 2g/3g or `deviceMemory <= 4` all get a static tier.
+- `prefers-reduced-motion`, `Save-Data`, 2g/3g or `deviceMemory <= 2` all get a static tier. The footer has a Motion on/off button.
 - Targets on a mid-range Android over slow 4G: LCP under 2.5s, INP under 200ms, CLS under 0.05. LCP is text, never a canvas.
 - WCAG 2.2 AA. Decorative layers are `aria-hidden`. Every interactive visual has a real button or link.
 
 ## Where things live
 - Research reports: `docs/research/` (01 UI/UX audit, 02 space components, 03 award sites, decisions).
-- Design tokens: `src/styles/global.css`. Space components: `src/components/space/`. Site config: `src/config/site.ts`.
+- Design tokens and component styles: `src/styles/global.css`. Effects: `src/scripts/`. Components: `src/components/`. Copy: `src/i18n/ui.ts`, `src/data/`. Site config: `src/config/site.ts`.
+- Sample content is flagged `draft` and only shows when `PUBLIC_SHOW_DRAFTS=true` (dev and Netlify previews). See `src/lib/drafts.ts`.
+- Checks: `npm run check` (types), `npm run qa` against `astro preview` (see `scripts/qa.mjs`).

@@ -10,9 +10,9 @@
 import { motionOn, onMotionChange, rng, fitCanvas } from './motion';
 
 const GOLD = '#C5A463', GOLD_BRIGHT = '#F0E2BE', GOLD_DEEP = '#8F713D';
-const REPEL_FORCE = 9000;  // قوة الدفع (بكسل/ث²) عند مركز المؤشر
-const SPRING = 10;         // قوة العودة إلى المكان الأصلي
-const DAMPING = 4.2;       // التخميد: أقل = تطاير أطول
+const REPEL_FORCE = 5200;  // قوة الدفع (بكسل/ث²) عند مركز المؤشر
+const SPRING = 22;         // قوة العودة إلى المكان الأصلي
+const DAMPING = 6;         // التخميد: أقل = تطاير أطول وارتداد أوضح
 
 const canvas = document.querySelector<HTMLCanvasElement>('.hero-planet');
 const host = canvas?.closest<HTMLElement>('.hero');
@@ -32,6 +32,9 @@ if (canvas && host) {
   }
   // حالة كل نقطة على الشاشة: إزاحة (ox, oy) وسرعة (vx, vy)
   const sState = new Float32Array(NS * 4), rState = new Float32Array(NR * 4);
+  // لكل نقطة "شخصية" ثابتة: قوة تأثر مختلفة وانحراف بسيط في اتجاه الدفع، حتى تتطاير النجوم بشكل طبيعي لا كحافة منتظمة
+  const jitter = (n: number) => { const a = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const ang = (r() - 0.5) * 1.3; a[i * 3] = 0.45 + r() * 1.25; a[i * 3 + 1] = Math.cos(ang); a[i * 3 + 2] = Math.sin(ang); } return a; };
+  const sJit = jitter(NS), rJit = jitter(NR);
 
   let w = 0, h = 0, ctx: CanvasRenderingContext2D | null = null;
   const pointer = { x: 0, y: 0, on: false };
@@ -49,13 +52,14 @@ if (canvas && host) {
 
   /** يحرّك النقطة (دفع من المؤشر + نابض العودة) ويعيد موضعها النهائي في out */
   const out = [0, 0];
-  function physics(state: Float32Array, k: number, hx: number, hy: number, dt: number, reach: number) {
+  function physics(state: Float32Array, jit: Float32Array, k: number, hx: number, hy: number, dt: number, reach: number) {
     let ox = state[k], oy = state[k + 1], vx = state[k + 2], vy = state[k + 3];
     if (pointer.on) {
       const dx = hx + ox - pointer.x, dy = hy + oy - pointer.y, d2 = dx * dx + dy * dy;
       if (d2 < reach * reach) {
-        const d = Math.sqrt(d2) || 1, f = (1 - d / reach); const push = f * f * REPEL_FORCE * dt;
-        vx += (dx / d) * push; vy += (dy / d) * push;
+        const j = (k / 4) * 3, d = Math.sqrt(d2) || 1, f = 1 - d / reach, push = f * f * REPEL_FORCE * jit[j] * dt;
+        const nx = dx / d, ny = dy / d; // اتجاه الابتعاد عن المؤشر، مع انحراف النقطة الخاص
+        vx += (nx * jit[j + 1] - ny * jit[j + 2]) * push; vy += (nx * jit[j + 2] + ny * jit[j + 1]) * push;
       }
     }
     if (ox || oy || vx || vy) {
@@ -71,7 +75,7 @@ if (canvas && host) {
     if (!ctx) return;
     ctx.clearRect(0, 0, w, h);
     const { R, cx, cy } = geometry();
-    const reach = Math.max(90, R * 0.75);
+    const reach = Math.max(80, R * 0.62);
     const rot = t * 0.06;
 
     const xf = (x: number, y: number, z: number, a: number): [number, number, number] => {
@@ -87,7 +91,7 @@ if (canvas && host) {
       for (let i = 0, k = 0; i < ring.length; i += 3, k += 4) {
         const [x, y, z] = xf(ring[i], ring[i + 1], ring[i + 2], rot * 0.6);
         if ((z >= 0) !== front) continue;
-        physics(rState, k, cx + x * R, cy - y * R, front ? dt : dt, reach);
+        physics(rState, rJit, k, cx + x * R, cy - y * R, dt, reach);
         if (!front && x * x + y * y < 1 && !rState[k] && !rState[k + 1]) continue; // مخفي خلف الكوكب
         ctx!.globalAlpha = front ? 0.62 : 0.3;
         ctx!.fillRect(out[0] - 0.6, out[1] - 0.6, 1.2, 1.2);
@@ -97,7 +101,7 @@ if (canvas && host) {
 
     for (let i = 0, k = 0; i < sph.length; i += 3, k += 4) {
       const [x, y, z] = xf(sph[i], sph[i + 1], sph[i + 2], rot);
-      physics(sState, k, cx + x * R, cy - y * R, dt, reach);
+      physics(sState, sJit, k, cx + x * R, cy - y * R, dt, reach);
       if (z < 0 && !sState[k] && !sState[k + 1]) continue; // الوجه الخلفي لا يُرسم إلا إذا كان متطايراً
       const b = Math.max(0, x * L[0] + y * L[1] + z * L[2]);
       ctx.globalAlpha = z < 0 ? 0.12 : 0.07 + 0.93 * Math.pow(b, 1.25);

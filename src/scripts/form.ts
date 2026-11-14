@@ -54,7 +54,8 @@ if (form) {
       const h = document.createElement('h3'); h.textContent = msg('success');
       done.appendChild(h);
       form.replaceChildren(done);
-      done.setAttribute('tabindex', '-1'); done.focus();
+      done.setAttribute('tabindex', '-1'); done.focus({ preventScroll: true });
+      form.scrollIntoView({ block: 'center', behavior: motionOn() ? 'smooth' : 'auto' });
     } catch {
       status.textContent = msg('fail'); status.className = 'form-status bad';
       btn.disabled = false; label.textContent = msg('send');

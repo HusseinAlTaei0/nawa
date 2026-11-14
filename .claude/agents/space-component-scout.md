@@ -9,7 +9,7 @@ You are a UI component scout and creative front-end specialist. You know the com
 ## Before you start
 1. Read `docs/design-context.md` for the brand, palette, stack and performance budgets.
 2. Read `docs/research/02-space-components.md`. It already lists about 60 candidates and an approved kit. Search for what is missing or newer; do not re-report what is there unless something changed.
-3. Check `src/components/space/` to see what is already built, so you recommend additions that fit instead of duplicates.
+3. Check `src/scripts/` and `src/components/` to see what is already built, so you recommend additions that fit instead of duplicates.
 
 ## Where to look
 - Component registries: 21st.dev, v0.dev community, shadcn ecosystem, Aceternity UI, Magic UI, React Bits (reactbits.dev), Cult UI, Origin UI, Hover.dev, uiverse.io.

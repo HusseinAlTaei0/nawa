@@ -385,7 +385,7 @@ html[lang="ar"] .svc-row .idx { font-style: normal; }
 /* ---------- الكرة الأرضية (بغداد من المدار) ---------- */
 .place .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 72px); align-items: center; }
 .globe-box { position: relative; width: min(100%, 520px); aspect-ratio: 1; margin-inline: auto; }
-.globe-box canvas { width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }
+.globe-box canvas { width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; -webkit-mask-image: radial-gradient(closest-side, #000 74%, transparent 100%); mask-image: radial-gradient(closest-side, #000 74%, transparent 100%); }
 .globe-box.ready canvas { opacity: 1; }
 .globe-box .fallback { position: absolute; inset: 8%; border-radius: 50%; border: 1px solid var(--color-line); background: radial-gradient(circle at 34% 30%, #2c2c2c, #101010 60%, #060606); transition: opacity 0.8s ease; }
 .globe-box .fallback::after { content: ""; position: absolute; inset-block-start: 43%; left: 62%; width: 8px; height: 8px; border-radius: 50%; background: var(--color-gold); box-shadow: 0 0 0 6px rgba(197, 164, 99, 0.18); }
@@ -400,7 +400,7 @@ html[lang="ar"] .svc-row .idx { font-style: normal; }
 .faq summary { display: flex; align-items: center; justify-content: space-between; gap: 20px; cursor: pointer; list-style: none; padding-block: 22px; font-family: var(--font-display); font-size: clamp(1.15rem, 1.05rem + 0.5vw, 1.4rem); color: var(--color-ink); line-height: 1.35; }
 html[lang="ar"] .faq summary { line-height: 1.6; }
 .faq summary::-webkit-details-marker { display: none; }
-.faq summary::after { content: ""; flex: none; width: 12px; height: 12px; border-inline-end: 1.5px solid var(--color-gold); border-block-end: 1.5px solid var(--color-gold); rotate: 45deg; translate: 0 -3px; transition: rotate 0.3s var(--ease), translate 0.3s var(--ease); }
+.faq summary::after { content: ""; flex: none; width: 12px; height: 12px; border-right: 1.5px solid var(--color-gold); border-bottom: 1.5px solid var(--color-gold); rotate: 45deg; translate: 0 -3px; transition: rotate 0.3s var(--ease), translate 0.3s var(--ease); }
 .faq details[open] summary::after { rotate: 225deg; translate: 0 3px; }
 .faq details p { padding-block-end: 24px; max-width: 64ch; }
 
@@ -454,7 +454,7 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .form-status { font-size: 0.95rem; }
 .form-status.ok { color: var(--color-success); }
 .form-status.bad { color: var(--color-danger); }
-.form-done { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.form-done { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; min-height: 220px; justify-content: center; }
 .form-done h3 { font-size: 1.7rem; font-weight: 400; }
 /* لحظة الإطلاق: خيط ذهبي يصعد بعد الإرسال الناجح */
 .launch { position: fixed; inset-block-end: 0; width: 2px; height: 46vh; background: linear-gradient(to top, transparent, var(--color-gold) 60%, #fff); border-radius: 2px; pointer-events: none; z-index: 90; animation: launch 1.25s var(--ease-io) forwards; }
