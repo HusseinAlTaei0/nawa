@@ -1,0 +1,8 @@
+---
+/** شارة "محتوى تجريبي" تظهر فوق أي قسم نموذجي (في المعاينة فقط) */
+import { ui } from '../i18n/ui';
+import type { Lang } from '../config/site';
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+---
+<span class="draft-tag" title={ui[lang].sampleNote}>{ui[lang].sample}</span>

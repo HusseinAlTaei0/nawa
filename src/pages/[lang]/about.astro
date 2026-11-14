@@ -1,0 +1,97 @@
+---
+/** صفحة من نحن: جوهر العلامة (رؤية، مهمة، غاية، وعد) → معنى الشعار → طريقة كلامنا → الفريق (تجريبي) → بغداد */
+import Base from '../../layouts/Base.astro';
+import SectionHead from '../../components/SectionHead.astro';
+import Mark from '../../components/Mark.astro';
+import Globe from '../../components/Globe.astro';
+import Closing from '../../components/Closing.astro';
+import DraftTag from '../../components/DraftTag.astro';
+import { aboutPage, home } from '../../data/pages';
+import { gold } from '../../i18n/ui';
+import { LANGS, type Lang } from '../../config/site';
+import { showDrafts } from '../../lib/drafts';
+
+export function getStaticPaths() { return LANGS.map((lang) => ({ params: { lang } })); }
+const lang = Astro.params.lang as Lang;
+const c = aboutPage[lang];
+---
+<Base lang={lang} title={c.title} description={c.lead}>
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>{c.eyebrow}</p>
+      <h1 data-reveal style="--i:1" set:html={gold(c.title)} />
+      <p class="lead" data-reveal style="--i:2">{c.lead}</p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-block-start:0">
+    <div class="wrap">
+      <div class="grid-2 hair" style="gap:1px" data-reveal>
+        {c.essence.map((e) => (
+          <div>
+            <p class="eyebrow">{e.label}</p>
+            <p class="essence" style={'gold' in e && e.gold ? 'color:var(--color-gold)' : undefined}>{e.text}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section band">
+    <div class="wrap grid-2" style="align-items:center">
+      <div style="display:grid;place-items:center;padding-block:24px" data-reveal>
+        <div class="mark-stage">
+          <span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span>
+          <Mark class="mark-xl" title="NAWA" />
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:18px" data-reveal>
+        <p class="eyebrow">{c.mark.eyebrow}</p>
+        <h2 set:html={gold(c.mark.title)} />
+        <p class="lead">{c.mark.text}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <SectionHead eyebrow={c.voice.eyebrow} title={c.voice.title} />
+      <div class="grid-4 hair" data-reveal>
+        {c.voice.items.map((v) => <div><h3>{v}</h3></div>)}
+      </div>
+    </div>
+  </section>
+
+  {showDrafts && (
+    <section class="section band" data-draft>
+      <div class="wrap">
+        <SectionHead eyebrow={c.team.eyebrow} title={c.team.title} />
+        <p style="margin-block-end:16px"><DraftTag lang={lang} /></p>
+        <div class="grid-3 hair" data-reveal>
+          {c.team.members.map((m) => (
+            <div>
+              <span class="avatar" aria-hidden="true"></span>
+              <h3>{m.name}</h3>
+              <p class="muted">{m.role}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <Globe lang={lang} />
+  <Closing lang={lang} title={home[lang].closing.title} text={home[lang].closing.text} />
+</Base>
+<style>
+  .essence { font-family: var(--font-display); font-size: clamp(1.25rem, 1.1rem + 0.8vw, 1.7rem); line-height: 1.35; color: var(--color-ink); }
+  :global(html[lang="ar"]) .essence { line-height: 1.7; }
+  .mark-stage { position: relative; width: min(100%, 360px); aspect-ratio: 1; display: grid; place-items: center; }
+  .mark-stage :global(.mark-xl) { width: 38%; height: auto; color: var(--color-ink); position: relative; }
+  .ring { position: absolute; border: 1px solid var(--color-gold-deep); border-radius: 50%; }
+  .r1 { inset: 12%; opacity: 0.6; }
+  .r2 { inset: 4%; opacity: 0.35; animation: spin 60s linear infinite; }
+  .r2::after { content: ""; position: absolute; top: -3px; left: calc(50% - 3px); width: 6px; height: 6px; border-radius: 50%; background: var(--color-gold); }
+  .r3 { inset: -4%; opacity: 0.18; }
+  .avatar { width: 64px; height: 64px; border-radius: 50%; border: 1px solid var(--color-line-strong); background: var(--color-surface-2); }
+</style>

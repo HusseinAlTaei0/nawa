@@ -1,0 +1,21 @@
+---
+/** نداء الختام في آخر كل صفحة: الشعار + عنوان + زر المشروع + واتساب */
+import Mark from './Mark.astro';
+import PlanetButton from './PlanetButton.astro';
+import { ui, path, gold } from '../i18n/ui';
+import { whatsappLink, type Lang } from '../config/site';
+interface Props { lang: Lang; title: string; text?: string; wa?: string; }
+const { lang, title, text, wa } = Astro.props;
+const t = ui[lang];
+---
+<section class="section closing">
+  <div class="wrap" data-reveal>
+    <Mark class="mark-big" />
+    <h2 set:html={gold(title)} />
+    {text && <p class="lead">{text}</p>}
+    <div class="ctas">
+      <PlanetButton href={path(lang, 'contact')} label={t.cta} />
+      <PlanetButton href={whatsappLink(wa ?? t.waDefault)} label={t.whatsapp} variant="ghost" external />
+    </div>
+  </div>
+</section>

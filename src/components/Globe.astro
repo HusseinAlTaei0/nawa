@@ -1,0 +1,26 @@
+---
+/** "بغداد من المدار": كرة أرضية داكنة بأقواس ذهبية من بغداد إلى مدن المنطقة. السلوك في src/scripts/globe.ts */
+import { home } from '../data/pages';
+import { gold } from '../i18n/ui';
+import type { Lang } from '../config/site';
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const c = home[lang].place;
+---
+<section class="section place">
+  <div class="wrap">
+    <div class="copy" data-reveal>
+      <p class="eyebrow">{c.eyebrow}</p>
+      <h2 set:html={gold(c.title)} />
+      <p class="lead">{c.text}</p>
+      <p class="cities">{c.cities}</p>
+    </div>
+    <div class="globe-box" data-globe aria-hidden="true">
+      <div class="fallback"></div>
+      <canvas></canvas>
+    </div>
+  </div>
+</section>
+<script>
+  import '../scripts/globe.ts';
+</script>

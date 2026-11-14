@@ -1,0 +1,13 @@
+---
+/**
+ * شعار NAWA (السداسي + القرص). الهندسة منقولة حرفياً من ملف الشعار الرسمي — لا تعدّلها.
+ * heavy: خط أسمك للأحجام الصغيرة (≤32px) كما في قواعد الهوية.
+ */
+interface Props { class?: string; heavy?: boolean; title?: string; }
+import { HEX } from '../lib/mark';
+const { class: cls = 'mark', heavy = false, title } = Astro.props;
+---
+<svg class={cls} viewBox="0 0 228.89 258.61" role={title ? 'img' : undefined} aria-label={title} aria-hidden={title ? undefined : 'true'}>
+  <path d={HEX} fill="none" stroke="currentColor" stroke-width={heavy ? 14 : 6.75} stroke-linejoin="round" />
+  <circle cx="114.54" cy="131.10" r="44.3" fill="currentColor" />
+</svg>

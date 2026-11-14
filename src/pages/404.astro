@@ -1,0 +1,19 @@
+---
+/** صفحة 404 (ملف واحد للغتين لأن Netlify يقدّم /404.html لكل المسارات غير الموجودة) */
+import Base from '../layouts/Base.astro';
+import PlanetButton from '../components/PlanetButton.astro';
+---
+<Base lang="en" title="Page not found" noindex>
+  <section class="page-hero" style="min-height:80svh;display:grid;align-items:center">
+    <div class="wrap" style="align-items:flex-start">
+      <p class="eyebrow">404</p>
+      <h1>This page left its <em>orbit.</em></h1>
+      <p class="lead">The address may have changed, or the page never existed.</p>
+      <p class="lead" lang="ar" dir="rtl" style="font-weight:400">هذه الصفحة خرجت من مدارها.</p>
+      <div class="ctas">
+        <PlanetButton href="/en/" label="Back to home" />
+        <PlanetButton href="/ar/" label="الصفحة الرئيسية" variant="ghost" />
+      </div>
+    </div>
+  </section>
+</Base>

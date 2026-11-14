@@ -1,0 +1,107 @@
+---
+/**
+ * القالب الأساسي لكل الصفحات:
+ * - <html lang dir> حسب اللغة
+ * - SEO: title, description, canonical, hreflang, Open Graph (مهم لمعاينات واتساب), JSON-LD
+ * - سكربت صغير مضمّن في <head> يحدد حالة الحركة وشاشة البداية قبل أول رسم (حتى لا يحدث وميض)
+ * - خلفية النجوم الثابتة + الهيدر + الفوتر
+ */
+import '@fontsource-variable/playfair-display/wght.css';
+import '@fontsource-variable/playfair-display/wght-italic.css';
+import '@fontsource-variable/montserrat/wght.css';
+import '@fontsource/ibm-plex-sans-arabic/arabic-400.css';
+import '@fontsource/ibm-plex-sans-arabic/arabic-500.css';
+import '@fontsource/ibm-plex-sans-arabic/arabic-600.css';
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { HEX, DISC } from '../lib/mark';
+import { ui, dirOf, otherLang, switchLangPath, plain } from '../i18n/ui';
+import { site, type Lang } from '../config/site';
+
+interface Props { lang: Lang; title?: string; description?: string; noindex?: boolean; }
+const { lang, title, description, noindex = false } = Astro.props;
+const t = ui[lang];
+const other = otherLang(lang);
+const pageTitle = title ? `${plain(title)} · ${lang === 'ar' ? site.nameAr : site.name}` : t.siteTitle;
+const desc = description ?? t.siteDescription;
+const here = Astro.url.pathname;
+const abs = (p: string) => new URL(p, site.url).href;
+const ogImage = abs(`/og/og-${lang}.png`);
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfessionalService',
+  name: site.name,
+  alternateName: site.nameAr,
+  url: site.url,
+  logo: abs('/icon-512.png'),
+  email: site.email,
+  description: ui.en.siteDescription,
+  address: { '@type': 'PostalAddress', addressLocality: 'Baghdad', addressCountry: 'IQ' },
+  areaServed: ['IQ', 'Middle East'],
+};
+---
+<!doctype html>
+<html lang={lang} dir={dirOf(lang)}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={desc} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="canonical" href={abs(here)} />
+    <link rel="alternate" hreflang={lang} href={abs(here)} />
+    <link rel="alternate" hreflang={other} href={abs(switchLangPath(here, other))} />
+    <link rel="alternate" hreflang="x-default" href={abs(switchLangPath(here, 'en'))} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:url" content={abs(here)} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content={lang === 'ar' ? 'ar_IQ' : 'en_US'} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <script is:inline>
+      // يعمل قبل أول رسم: يحدد حالة الحركة، وشاشة البداية (مرة واحدة لكل جلسة)، وتكملة كسوف تبديل اللغة
+      (function () {
+        var d = document.documentElement; d.classList.add('js');
+        var pref = null; try { pref = localStorage.getItem('nawa-motion'); } catch (e) {}
+        var rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var c = navigator.connection || {};
+        var lite = c.saveData || /(^|-)2g|3g/.test(c.effectiveType || '') || (navigator.deviceMemory && navigator.deviceMemory <= 2);
+        var off = pref === 'off' || (pref !== 'on' && (rm || lite));
+        d.dataset.motion = off ? 'off' : 'on';
+        try {
+          var ec = sessionStorage.getItem('nawa-eclipse');
+          if (ec) { sessionStorage.removeItem('nawa-eclipse'); if (!off) d.dataset.eclipse = ec; }
+          else if (!off && !sessionStorage.getItem('nawa-seen')) { d.dataset.preload = '1'; }
+          sessionStorage.setItem('nawa-seen', '1');
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="has-bar">
+    <a class="skip-link" href="#main">{t.skip}</a>
+    <!-- شاشة البداية: يُرسم الشعار ثم تُرفع الستارة (تظهر مرة واحدة في الجلسة) -->
+    <div class="preloader" aria-hidden="true">
+      <svg viewBox="0 0 228.89 258.61"><path class="pl-hex" pathLength="1" d={HEX} /><circle class="pl-disc" cx={DISC.cx} cy={DISC.cy} r={DISC.r} /></svg>
+    </div>
+    <canvas id="sky" aria-hidden="true"></canvas>
+    <Header lang={lang} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer lang={lang} />
+    <script>
+      import '../scripts/sky.ts';
+      import '../scripts/site.ts';
+    </script>
+  </body>
+</html>

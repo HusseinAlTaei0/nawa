@@ -1,0 +1,54 @@
+---
+/**
+ * قسم الخدمات في الصفحة الرئيسية (التصميم B): كروت عريضة يخرج الكوكب من حافتها.
+ * الكواكب صور واقعية بألوانها الطبيعية كما في التصميم القديم. السلوك في src/scripts/rail.ts
+ */
+import SectionHead from './SectionHead.astro';
+import Planet from './Planet.astro';
+import { services } from '../data/services';
+import { home } from '../data/pages';
+import { ui, path } from '../i18n/ui';
+import type { Lang } from '../config/site';
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const t = ui[lang], c = home[lang].services;
+const pad = (i: number) => String(i + 1).padStart(2, '0');
+const total = pad(services.length - 1);
+---
+<section class="rail-sec" data-rail aria-labelledby="svc-title">
+  <div class="rail-sticky">
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">{c.eyebrow}</p>
+        <h2 id="svc-title" set:html={c.title.replace(/\*(.+?)\*/g, '<em>$1</em>')} />
+        <p class="lead">{c.lead}</p>
+      </div>
+    </div>
+    <div class="rail">
+      {services.map((s, i) => (
+        <a class:list={['svc-card', i === 0 && 'on']} href={path(lang, `services/${s.slug}`)}>
+          <Planet name={s.planet} />
+          <span class="num"><bdi dir="ltr">{pad(i)}</bdi></span>
+          <span class="txt">
+            <h3>{s[lang].name}</h3>
+            <p>{s[lang].outcome}</p>
+            <span class="tlink">{t.more} <span class="arrow" aria-hidden="true">→</span></span>
+          </span>
+        </a>
+      ))}
+    </div>
+    <div class="wrap">
+      <div class="rail-foot">
+        <p class="count"><bdi dir="ltr"><b class="cur">01</b> / {total}</bdi></p>
+        <div class="prog" aria-hidden="true"><i></i></div>
+        <a class="skip" href="#after-services">{c.skip}</a>
+        <button class="rnd" type="button" data-step="-1" aria-label={t.prev}><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg></button>
+        <button class="rnd" type="button" data-step="1" aria-label={t.next}><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 3l5 5-5 5" /></svg></button>
+      </div>
+    </div>
+  </div>
+</section>
+<div id="after-services"></div>
+<script>
+  import '../scripts/rail.ts';
+</script>

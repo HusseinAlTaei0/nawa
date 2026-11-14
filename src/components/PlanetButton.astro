@@ -1,0 +1,20 @@
+---
+/**
+ * زر الكوكب: نواة ذهبية داخل حلقة مدار. عند المرور تكبر النواة ويدور قمر صغير حول الحلقة.
+ * variant="ghost" للزر الثانوي (نواة بيضاء صغيرة). زر ذهبي واحد فقط في كل شاشة.
+ */
+interface Props { href?: string; label: string; variant?: 'gold' | 'ghost'; size?: 'md' | 'sm'; external?: boolean; type?: 'submit' | 'button'; class?: string; }
+const { href, label, variant = 'gold', size = 'md', external = false, type, class: cls = '' } = Astro.props;
+const classes = ['pbtn', variant === 'ghost' && 'ghost', size === 'sm' && 'sm', cls].filter(Boolean).join(' ');
+---
+{href ? (
+  <a class={classes} href={href} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined}>
+    <span class="orb" aria-hidden="true"><span class="core"></span><span class="moon"></span></span>
+    <span class="btn-label">{label}</span>
+  </a>
+) : (
+  <button class={classes} type={type ?? 'button'}>
+    <span class="orb" aria-hidden="true"><span class="core"></span><span class="moon"></span></span>
+    <span class="btn-label">{label}</span>
+  </button>
+)}
