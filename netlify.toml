@@ -20,12 +20,14 @@
   from = "/"
   to = "/ar/"
   status = 302
+  force = true   # يوجد ملف index.html احتياطي في الجذر، و force يجعل التحويل يسبقه
   conditions = { Language = ["ar"] }
 
 [[redirects]]
   from = "/"
   to = "/en/"
   status = 302
+  force = true
 
 # رؤوس أمان لكل الصفحات
 [[headers]]
