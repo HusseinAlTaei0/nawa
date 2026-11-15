@@ -1,9 +1,13 @@
 ---
-/** صفحة طريقة العمل: المراحل الست على خط مدار، ثم طرق العمل الثلاث */
+/**
+ * صفحة طريقة العمل: هيدر بمجرة البكسلات (العمل المبعثر ينتظم حول قلب واحد)،
+ * ثم المراحل الست على خط مدار، ثم طرق العمل الثلاث
+ */
 import Base from '../../layouts/Base.astro';
 import SectionHead from '../../components/SectionHead.astro';
 import Stages from '../../components/Stages.astro';
 import Closing from '../../components/Closing.astro';
+import Galaxy from '../../components/Galaxy.astro';
 import { processData, home } from '../../data/pages';
 import { ui, gold } from '../../i18n/ui';
 import { LANGS, type Lang } from '../../config/site';
@@ -14,7 +18,9 @@ const lang = Astro.params.lang as Lang;
 const p = processData[lang], t = ui[lang];
 ---
 <Base lang={lang} title={p.title} description={p.lead}>
-  <section class="page-hero">
+  <section class="page-hero galaxy-hero">
+    <!-- المجرة على جهة نهاية السطر (يمين بالإنجليزي، يسار بالعربي)، والنص فوقها -->
+    <Galaxy />
     <div class="wrap">
       <p class="eyebrow" data-reveal>{p.eyebrow}</p>
       <h1 data-reveal style="--i:1" set:html={gold(p.title)} />
