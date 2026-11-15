@@ -1,11 +1,16 @@
 ---
-/** صفحة 404 (ملف واحد للغتين لأن Netlify يقدّم /404.html لكل المسارات غير الموجودة) */
+/**
+ * صفحة 404 (ملف واحد للغتين لأن Netlify يقدّم /404.html لكل المسارات غير الموجودة).
+ * اللحظة المميزة: ثقب أسود سحب الصفحة من مدارها. الثقب يتبع المؤشر، والنص تحته.
+ */
 import Base from '../layouts/Base.astro';
 import PlanetButton from '../components/PlanetButton.astro';
+import BlackHole from '../components/BlackHole.astro';
 ---
 <Base lang="en" title="Page not found" noindex>
-  <section class="page-hero" style="min-height:80svh;display:grid;align-items:center">
-    <div class="wrap" style="align-items:flex-start">
+  <section class="page-hero lost">
+    <BlackHole />
+    <div class="wrap">
       <p class="eyebrow">404</p>
       <h1>This page left its <em>orbit.</em></h1>
       <p class="lead">The address may have changed, or the page never existed.</p>
@@ -17,3 +22,11 @@ import PlanetButton from '../components/PlanetButton.astro';
     </div>
   </section>
 </Base>
+<style>
+  /* الثقب في النصف العلوي من الشاشة، والنص في المنتصف تحته */
+  .lost { position: relative; min-height: 100svh; display: flex; flex-direction: column; justify-content: flex-end; overflow: clip; touch-action: pan-y; }
+  .lost :global(.blackhole) { position: absolute; inset-inline: 0; inset-block-start: var(--header-h); width: 100%; height: 52svh; }
+  .lost .wrap { position: relative; z-index: 1; align-items: center; text-align: center; gap: 16px; pointer-events: none; }
+  .lost .wrap > * { pointer-events: auto; }
+  .lost .ctas { justify-content: center; margin-block-start: 8px; }
+</style>
