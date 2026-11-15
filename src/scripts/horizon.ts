@@ -1,41 +1,74 @@
 /**
- * Horizon Bloom: شروق يطلع من خلف حافة كوكب مظلم، في قسم الختام أسفل كل صفحة.
- * الفكرة: "بداية مشروعك" — الضوء يكسر حافة الكوكب كلما اقترب الزائر من زر التواصل.
- * (مستوحى من فكرة Horizon Bloom في React Bits Pro، لكنه مكتوب من الصفر بـ Canvas 2D وبألوان NAWA فقط)
+ * Horizon Bloom: شروق ينكسر فوق الحافة المضيئة لكوكب مظلم، في قسم الختام أسفل كل صفحة.
+ * الفكرة: "بداية مشروعك" — الضوء يتصاعد من خلف الكوكب كلما اقترب الزائر من زر التواصل.
+ * (مستوحى من Horizon Bloom في React Bits Pro، لكنه مكتوب من الصفر بـ Canvas 2D وبألوان NAWA فقط)
  *
- * - الشمس ترتفع حسب موضع القسم في الشاشة (تمرير طبيعي، لا scroll-jacking)
- * - يتوقف عن الرسم خارج الشاشة أو عند إخفاء التبويب
+ * طبقات المشهد (من الخلف للأمام):
+ *  1) هالة واسعة في السماء فوق الحافة
+ *  2) ستارة من خيوط ضوء رفيعة تتصاعد عمودياً على الحافة (مثل الشفق)، أكثف وأطول في الوسط وتتموّج ببطء
+ *  3) كتلة توهج ساطعة ملتصقة بالحافة في الوسط
+ *  4) الكوكب المعتم + انعكاس خافت للضوء على سطحه تحت الحافة
+ *  5) الحافة المضيئة على العرض كله (عدة طبقات = توهج بدون blur مكلف)
+ *
+ * - التقدّم يتبع التمرير (لا scroll-jacking)، والرسم يتوقف خارج الشاشة أو عند إخفاء التبويب
  * - عند إيقاف الحركة يُرسم إطار ثابت واحد (الشروق مكتمل)
  * - المشهد متناظر، فلا يحتاج انعكاساً في العربية
  */
-import { motionOn, onMotionChange, fitCanvas } from './motion';
+import { motionOn, onMotionChange, fitCanvas, rng } from './motion';
 
-// ألوان الهوية فقط (ذهبي / ذهبي غامق / ذهبي فاتح / أبيض دافئ لقلب الشمس)
-const GOLD = '197,164,99', GOLD_DEEP = '143,113,61', GOLD_BRIGHT = '221,194,136', CORE = '255,248,232';
-const RAYS = 9; // عدد أشعة الضوء فوق الأفق
+// ألوان الهوية فقط: أبيض دافئ لقلب الضوء، ثم ذهبي فاتح، ذهبي، ذهبي غامق
+const CORE = '255,247,230', GOLD_BRIGHT = '221,194,136', GOLD = '197,164,99', GOLD_DEEP = '143,113,61';
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const easeOut = (x: number) => 1 - Math.pow(1 - x, 3);
+
+/**
+ * خيط ضوء واحد مرسوم مسبقاً مرة واحدة (sprite): ساطع في الأسفل ويتلاشى للأعلى، وحوافه الجانبية ناعمة.
+ * رسم صورة جاهزة أسرع بكثير من إنشاء gradient لكل خيط في كل إطار.
+ */
+function makeStreak(): HTMLCanvasElement {
+  const s = document.createElement('canvas');
+  s.width = 16; s.height = 256;
+  const g = s.getContext('2d')!;
+  const v = g.createLinearGradient(0, 256, 0, 0);
+  v.addColorStop(0, `rgba(${CORE},1)`);
+  v.addColorStop(0.18, `rgba(${GOLD_BRIGHT},0.75)`);
+  v.addColorStop(0.55, `rgba(${GOLD},0.28)`);
+  v.addColorStop(1, `rgba(${GOLD},0)`);
+  g.fillStyle = v; g.fillRect(0, 0, 16, 256);
+  // نقصّ الحواف الجانبية بتدرّج أفقي حتى يبدو الخيط ضبابياً لا مستطيلاً
+  g.globalCompositeOperation = 'destination-in';
+  const hgr = g.createLinearGradient(0, 0, 16, 0);
+  hgr.addColorStop(0, 'rgba(0,0,0,0)'); hgr.addColorStop(0.5, 'rgba(0,0,0,1)'); hgr.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = hgr; g.fillRect(0, 0, 16, 256);
+  return s;
+}
 
 document.querySelectorAll<HTMLCanvasElement>('.horizon-bloom').forEach(setup);
 
 function setup(canvas: HTMLCanvasElement) {
   const host = canvas.parentElement as HTMLElement;
+  const streak = makeStreak();
   let w = 0, h = 0, ctx: CanvasRenderingContext2D | null = null;
-  let p = 0, t = 0; // p: تقدّم الشروق 0→1 (ناعم)، t: الزمن لحركة التنفس والأشعة
+  let p = 0, t = 0; // p: تقدّم الشروق 0→1 (ناعم)، t: الزمن لتموّج الخيوط
 
-  // لكل شعاع زاوية وطول وعرض ثابتة (قيم محددة حتى يبقى الشكل نفسه في كل زيارة)
-  const rays = Array.from({ length: RAYS }, (_, i) => {
-    const s = Math.sin(i * 12.9898) * 43758.5453, f = s - Math.floor(s);
-    return { a: ((i / (RAYS - 1)) * 2 - 1) * 1.25, len: 0.55 + f * 0.45, wid: 0.018 + f * 0.03, ph: f * 6.28 };
-  });
+  // خيوط الستارة: موضع على الحافة (u من -1 إلى 1)، طول، عرض، سرعة وطور التموّج. ثابتة لكل زيارة (بذرة ثابتة).
+  type Ray = { u: number; len: number; wid: number; sp: number; ph: number; a: number };
+  let rays: Ray[] = [];
+  function buildRays() {
+    const r = rng(37), n = w < 760 ? 100 : 220;
+    rays = Array.from({ length: n }, () => {
+      const k = r() * 2 - 1;
+      const u = Math.sign(k) * Math.pow(Math.abs(k), 1.2); // تكثيف قرب الوسط
+      return { u, len: 0.3 + r() * 0.7, wid: 2 + r() * 7, sp: 0.25 + r() * 0.6, ph: r() * 6.283, a: 0.35 + r() * 0.65 };
+    });
+  }
 
-  /** هندسة المشهد: كوكب كبير جداً لا يظهر منه إلا قوس الحافة أسفل القسم */
+  /** هندسة المشهد: كوكب كبير لا يظهر منه إلا قوس الحافة أسفل القسم */
   function geometry() {
-    const R = Math.max(w * 1.55, 680);                 // نصف قطر الكوكب: أكبر = انحناء أهدأ
-    const limbY = h - clamp(h * 0.2, 90, 200);          // أعلى نقطة في حافة الكوكب
-    const sunR = clamp(w * 0.026, 13, 32);              // نصف قطر قرص الشمس
-    return { R, limbY, cx: w / 2, cy: limbY + R, sunR };
+    const R = Math.max(w * 1.3, 620);                 // نصف القطر: انحناء واضح مثل المرجع (~10% من العرض عند الأطراف)
+    const limbY = h - clamp(h * 0.22, 100, 220);       // أعلى نقطة في الحافة
+    return { R, limbY, cx: w / 2, cy: limbY + R };
   }
 
   /** تقدّم الشروق حسب التمرير: يبدأ حين يدخل القسم من الأسفل ويكتمل حين يظهر كاملاً */
@@ -46,87 +79,82 @@ function setup(canvas: HTMLCanvasElement) {
 
   function draw() {
     if (!ctx || !w) return;
-    const c = ctx, { R, limbY, cx, cy, sunR } = geometry();
+    const c = ctx, { R, limbY, cx, cy } = geometry();
     const e = easeOut(p);
-    const I = e * (1 + 0.05 * Math.sin(t * 0.8)); // شدة الضوء مع "تنفس" خفيف
-    const sunY = limbY + sunR * 1.6 - e * sunR * 1.9; // من مخفية تماماً إلى قمة القرص فوق الحافة
+    const I = e * (1 + 0.04 * Math.sin(t * 0.7)); // شدة الضوء مع "تنفس" خفيف
+    const spread = w * 0.5;                        // نصف عرض الستارة
+    const maxLen = clamp(h * 0.34, 140, 340);      // أقصى ارتفاع للخيوط (يبقى تحت الأزرار)
 
     c.clearRect(0, 0, w, h);
     c.globalCompositeOperation = 'lighter'; // الضوء يُجمع فوق بعضه مثل الضوء الحقيقي
 
-    // 1) توهج السماء فوق الأفق
-    const wash = c.createRadialGradient(cx, limbY, 0, cx, limbY, w * (0.42 + 0.22 * e));
-    wash.addColorStop(0, `rgba(${GOLD},${0.17 * I})`);
-    wash.addColorStop(0.4, `rgba(${GOLD_DEEP},${0.07 * I})`);
-    wash.addColorStop(1, `rgba(${GOLD_DEEP},0)`);
-    c.fillStyle = wash; c.fillRect(0, 0, w, h); // كامل الارتفاع: الكوكب يغطي الجزء السفلي، فلا يظهر خط قص
+    // 1) هالة السماء: واسعة وخافتة، تغطي الأطراف أيضاً
+    const sky = c.createRadialGradient(cx, limbY, 0, cx, limbY, w * 0.75);
+    sky.addColorStop(0, `rgba(${GOLD},${0.13 * I})`);
+    sky.addColorStop(0.45, `rgba(${GOLD_DEEP},${0.07 * I})`);
+    sky.addColorStop(1, `rgba(${GOLD_DEEP},0)`);
+    c.fillStyle = sky; c.fillRect(0, 0, w, h);
 
-    // 2) أشعة ناعمة تنفتح من الشمس إلى الأعلى وتتمايل ببطء
+    // 2) ستارة الخيوط: كل خيط يخرج عمودياً على الحافة، وطوله يتموّج ببطء
     for (const ray of rays) {
-      const a = -Math.PI / 2 + ray.a + 0.035 * Math.sin(t * 0.25 + ray.ph);
-      const L = h * 0.95 * ray.len * e, half = ray.wid * (1 + 0.25 * Math.sin(t * 0.4 + ray.ph));
-      if (L < 2) continue;
-      const ex = cx + Math.cos(a) * L, ey = sunY + Math.sin(a) * L;
-      const g = c.createLinearGradient(cx, sunY, ex, ey);
-      g.addColorStop(0, `rgba(${GOLD_BRIGHT},${0.075 * I})`); // خافتة عمداً: الذهبي ≤ 5% من الشاشة
-      g.addColorStop(1, `rgba(${GOLD_BRIGHT},0)`);
-      c.fillStyle = g;
-      c.beginPath(); c.moveTo(cx, sunY);
-      c.lineTo(cx + Math.cos(a - half) * L, sunY + Math.sin(a - half) * L);
-      c.lineTo(cx + Math.cos(a + half) * L, sunY + Math.sin(a + half) * L);
-      c.closePath(); c.fill();
+      const x = cx + ray.u * spread;
+      const dx = x - cx; if (Math.abs(dx) >= R) continue;
+      const yb = cy - Math.sqrt(R * R - dx * dx);           // نقطة الحافة تحت الخيط
+      const env = Math.exp(-ray.u * ray.u * 1.5);            // أقوى في الوسط، وتمتد لنحو نصف العرض
+      const wave = 0.72 + 0.28 * Math.sin(t * ray.sp + ray.ph);
+      const len = maxLen * ray.len * env * wave * e;
+      if (len < 3) continue;
+      const ang = Math.atan2(dx, R);                         // ميل الخيط مع انحناء الحافة
+      c.globalAlpha = Math.min(1, 0.42 * ray.a * env * (0.55 + 0.45 * wave) * I);
+      c.save(); c.translate(x, yb + 2); c.rotate(ang);
+      c.drawImage(streak, -ray.wid / 2, -len, ray.wid, len);
+      c.restore();
     }
+    c.globalAlpha = 1;
 
-    // 3) قرص الشمس وهالتها (الجزء السفلي سيغطيه الكوكب في الخطوة التالية)
-    const sun = c.createRadialGradient(cx, sunY, 0, cx, sunY, sunR * 4.5);
-    sun.addColorStop(0, `rgba(${CORE},${e})`);
-    sun.addColorStop(0.14, `rgba(${CORE},${0.9 * e})`);
-    sun.addColorStop(0.22, `rgba(${GOLD_BRIGHT},${0.45 * e})`);
-    sun.addColorStop(0.5, `rgba(${GOLD},${0.12 * e})`);
-    sun.addColorStop(1, `rgba(${GOLD},0)`);
-    c.fillStyle = sun; c.beginPath(); c.arc(cx, sunY, sunR * 4.5, 0, Math.PI * 2); c.fill();
-
-    // 4) الكوكب: جسم معتم يحجب النجوم والشمس خلفه
-    c.globalCompositeOperation = 'source-over';
-    c.fillStyle = '#070707';
-    c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.fill();
-
-    // 5) ضوء الغلاف الجوي ينتشر على الجانب المظلم قرب الحافة
-    c.globalCompositeOperation = 'lighter';
-    const scatter = c.createRadialGradient(cx, limbY, 0, cx, limbY, w * 0.32);
-    scatter.addColorStop(0, `rgba(${GOLD_DEEP},${0.16 * I})`);
-    scatter.addColorStop(1, `rgba(${GOLD_DEEP},0)`);
-    c.save(); c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.clip();
-    c.fillStyle = scatter; c.fillRect(0, limbY - 2, w, h - limbY + 2);
+    // 3) كتلة التوهج الساطعة الملتصقة بالحافة في الوسط (بيضاوية مسطّحة)
+    c.save(); c.translate(cx, limbY); c.scale(1, 0.24);
+    const core = c.createRadialGradient(0, 0, 0, 0, 0, w * 0.34);
+    core.addColorStop(0, `rgba(${CORE},${0.95 * I})`);
+    core.addColorStop(0.28, `rgba(${GOLD_BRIGHT},${0.5 * I})`);
+    core.addColorStop(0.6, `rgba(${GOLD},${0.14 * I})`);
+    core.addColorStop(1, `rgba(${GOLD},0)`);
+    c.fillStyle = core; c.beginPath(); c.arc(0, 0, w * 0.34, 0, Math.PI * 2); c.fill();
     c.restore();
 
-    // 6) حافة الكوكب المضيئة: أقوى عند الشمس وتخفت نحو الأطراف (عدة طبقات = توهج بدون blur مكلف)
-    const rimI = 0.18 + 0.82 * I; // حافة خافتة حتى قبل الشروق
+    // 4) الكوكب المعتم: يحجب النجوم والضوء خلفه
+    c.globalCompositeOperation = 'source-over';
+    const body = c.createLinearGradient(0, limbY, 0, h);
+    body.addColorStop(0, '#0c0c0c'); body.addColorStop(1, '#060606');
+    c.fillStyle = body;
+    c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.fill();
+
+    // انعكاس خافت للضوء على سطح الكوكب تحت الحافة مباشرة
+    c.globalCompositeOperation = 'lighter';
+    c.save(); c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.clip();
+    c.translate(cx, limbY); c.scale(1, 0.18);
+    const refl = c.createRadialGradient(0, 0, 0, 0, 0, w * 0.4);
+    refl.addColorStop(0, `rgba(${CORE},${0.22 * I})`);
+    refl.addColorStop(0.35, `rgba(${GOLD_DEEP},${0.1 * I})`);
+    refl.addColorStop(1, `rgba(${GOLD_DEEP},0)`);
+    c.fillStyle = refl; c.beginPath(); c.arc(0, 0, w * 0.4, 0, Math.PI * 2); c.fill();
+    c.restore();
+
+    // 5) الحافة المضيئة: ساطعة في الوسط وتبقى واضحة حتى الأطراف (كما في المرجع)
+    const rimI = 0.2 + 0.8 * I; // حافة خافتة حتى قبل الشروق
     const rim = c.createLinearGradient(0, 0, w, 0);
-    rim.addColorStop(0, `rgba(${GOLD},0)`);
-    rim.addColorStop(0.2, `rgba(${GOLD},0.22)`);
-    rim.addColorStop(0.43, `rgba(${GOLD_BRIGHT},0.7)`);
+    rim.addColorStop(0, `rgba(${GOLD},0.4)`);
+    rim.addColorStop(0.25, `rgba(${GOLD_BRIGHT},0.6)`);
     rim.addColorStop(0.5, `rgba(${CORE},1)`);
-    rim.addColorStop(0.57, `rgba(${GOLD_BRIGHT},0.7)`);
-    rim.addColorStop(0.8, `rgba(${GOLD},0.22)`);
-    rim.addColorStop(1, `rgba(${GOLD},0)`);
-    const span = Math.asin(Math.min(1, (w * 0.62) / R));
+    rim.addColorStop(0.75, `rgba(${GOLD_BRIGHT},0.6)`);
+    rim.addColorStop(1, `rgba(${GOLD},0.4)`);
+    const span = Math.asin(Math.min(1, (w * 0.55) / R));
     c.strokeStyle = rim;
-    for (const [lw, a] of [[24, 0.04], [10, 0.1], [3.5, 0.35], [1.2, 0.95]] as const) {
+    for (const [lw, a] of [[40, 0.035], [16, 0.08], [6, 0.22], [2.2, 0.6], [1, 1]] as const) {
       c.globalAlpha = a * rimI; c.lineWidth = lw;
       c.beginPath(); c.arc(cx, cy, R, -Math.PI / 2 - span, -Math.PI / 2 + span); c.stroke();
     }
     c.globalAlpha = 1;
-
-    // 7) وهج أفقي رفيع على خط الأفق (anamorphic flare)
-    c.save(); c.translate(cx, limbY); c.scale(1, 0.035);
-    const flare = c.createRadialGradient(0, 0, 0, 0, 0, w * 0.42);
-    flare.addColorStop(0, `rgba(${CORE},${0.5 * I})`);
-    flare.addColorStop(0.25, `rgba(${GOLD_BRIGHT},${0.16 * I})`);
-    flare.addColorStop(1, `rgba(${GOLD},0)`);
-    c.fillStyle = flare; c.beginPath(); c.arc(0, 0, w * 0.42, 0, Math.PI * 2); c.fill();
-    c.restore();
-
     c.globalCompositeOperation = 'source-over';
   }
 
@@ -146,7 +174,9 @@ function setup(canvas: HTMLCanvasElement) {
   const resize = () => {
     const f = fitCanvas(canvas, window.innerWidth < 760 ? 1.25 : 1.5);
     if (!f) return;
+    const narrowChanged = (w < 760) !== (f.w < 760) || !rays.length;
     w = f.w; h = f.h; ctx = f.ctx;
+    if (narrowChanged) buildRays(); // عدد خيوط أقل على الموبايل
     if (motionOn()) { p = scrollTarget(); draw(); } else still();
   };
 
