@@ -18,7 +18,25 @@ Update it here when a decision changes, not inside each agent.
 - Content: templates with sample content flagged `draft: true`. Production never shows invented numbers, logos or testimonials.
 - Contact: Netlify Forms. WhatsApp is the primary channel.
 - Motion level: calm luxury, about 80% clarity and proof, 20% signature moments. One "wow" per page, and it must explain the offer.
-- Signature pieces already built: gold star cloud behind every page (`sky.ts`), gold point-cloud planet hero with pointer repel (`heroplanet.ts`), opening screen where the logo draws itself, service cards with real planet photos (`rail.ts`), hexagon orbit on the Services page (`orbit.ts`), eclipse language switch and moon cursor (`site.ts`), launch trail on form success (`form.ts`), Baghdad globe (`globe.ts`).
+- Signature pieces already built: gold star cloud behind every page (`sky.ts`), gold point-cloud planet hero with pointer repel (`heroplanet.ts`), opening screen where the logo draws itself, service cards with real planet photos (`rail.ts`), hexagon orbit on the Services page (`orbit.ts`), eclipse language switch and moon cursor (`site.ts`), launch trail on form success (`form.ts`), Baghdad globe (`globe.ts`: cobe dot-map earth with white land dots and a soft halo, gold orbit rings with travelling comets drawn in Canvas 2D on top, gold arcs from Baghdad to the region, drag to turn; our take on React Bits Pro's "Globe", kept in the existing "Built in Baghdad. Made to travel." section on Home and About instead of adding a new section), sunrise over a dark planet's edge behind the closing call to action on every page (`horizon.ts`, our own Canvas 2D take on React Bits Pro's "Horizon Bloom", rises with scroll), pixel galaxy in the Process page header (`galaxy.ts`: thousands of white points in a rotating spiral, points under the pointer heat to gold and cool down slowly; our take on React Bits Pro's "Binary Orbits").
+
+## Signature piece per page (check before adding anything)
+| Page | Signature moment | Message it carries |
+|---|---|---|
+| Home | Gold point-cloud planet (hero), Globe ("Made to travel") | We build intelligence; built in Baghdad, works anywhere |
+| Services | Hexagon orbit | Six services around one core, like the logo |
+| Process | Pixel galaxy (header) | Scattered work pulled into one system that turns around a core |
+| About | Logo rings + Globe | What the mark means; where we are |
+| Contact | Launch trail on form success | Your project takes off |
+| Every page | Star cloud background, Horizon Bloom behind the closing CTA | Space identity; a new start next to "Start a project" |
+
+## Adding a new effect (standing rule from the owner)
+Every component brought from React Bits or a similar library goes through these steps, in order:
+1. **Place first.** Pick the page and section before writing code, and write down why. Upgrade an existing piece that does the same job rather than adding a second one. Give a page that has no signature moment priority. The effect must carry that section's message; if it carries none, it does not go in.
+2. **Rebuild, don't import.** A plain TypeScript module in `src/scripts/` + a small Astro component. Canvas 2D or CSS; WebGL only via cobe. No React, no copied library code.
+3. **Translate the palette.** Reference colours (purple, blue, pink, teal) become white/grey with a warm-white core, and gold only at the focal point or the moment of interaction. Stay within 3-5% gold per viewport.
+4. **Respect the budgets.** House easing, pause off-screen and on hidden tabs, static frame when motion is off, DPR ≤ 1.5 (1.25 on phones), decorative layers `aria-hidden`, LCP stays text. In Arabic mirror the layout, never the lighting, rotation or the scene itself.
+5. **Verify and record.** `npm run check`, `npm run build`, screenshots on desktop (EN) and mobile (AR), then update the list and table above.
 
 ## Visual identity
 - Space: stars, planets, orbits, galaxies, shooting stars. Rendered quietly, never as sci-fi cliche.

@@ -107,6 +107,16 @@ main { position: relative; z-index: 1; }
 .band { background: rgba(10, 10, 10, 0.86); border-block: 1px solid var(--color-line); }
 .page-hero { padding-block: calc(var(--header-h) + clamp(56px, 10vh, 120px)) clamp(40px, 7vh, 80px); }
 .page-hero .wrap { display: flex; flex-direction: column; gap: 20px; }
+/* هيدر بمجرة (صفحة Process): المجرة تشغل نصف العرض على جهة نهاية السطر، والنص على جهة البداية */
+.galaxy-hero { position: relative; overflow: clip; min-height: min(78svh, 760px); display: grid; align-items: center; }
+.galaxy-hero .wrap { position: relative; z-index: 1; pointer-events: none; }
+.galaxy-hero .wrap > * { max-width: min(560px, 46%); pointer-events: auto; }
+.galaxy { position: absolute; inset-block: calc(var(--header-h) + 8px) 0; inset-inline-end: 0; width: 58%; height: calc(100% - var(--header-h) - 8px); touch-action: pan-y; }
+@media (max-width: 900px) {
+  .galaxy-hero { min-height: 0; display: block; padding-block-end: 0; }
+  .galaxy-hero .wrap > * { max-width: 100%; }
+  .galaxy { position: relative; inset: auto; width: 100%; height: clamp(260px, 72vw, 420px); margin-block-start: 12px; }
+}
 .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(24px, 4vw, 64px); }
 .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; }
@@ -384,15 +394,20 @@ html[lang="ar"] .svc-row .idx { font-style: normal; }
 
 /* ---------- الكرة الأرضية (بغداد من المدار) ---------- */
 .place .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 72px); align-items: center; }
-.globe-box { position: relative; width: min(100%, 520px); aspect-ratio: 1; margin-inline: auto; }
-.globe-box canvas { width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; -webkit-mask-image: radial-gradient(closest-side, #000 74%, transparent 100%); mask-image: radial-gradient(closest-side, #000 74%, transparent 100%); }
-.globe-box.ready canvas { opacity: 1; }
-.globe-box .fallback { position: absolute; inset: 8%; border-radius: 50%; border: 1px solid var(--color-line); background: radial-gradient(circle at 34% 30%, #2c2c2c, #101010 60%, #060606); transition: opacity 0.8s ease; }
+/* الكرة: canvas الأرض في المنتصف بنسبة 74% (EARTH_FRAC في globe.ts)، وطبقة المدارات تغطي الصندوق كله */
+.globe-box { position: relative; width: min(100%, 600px); aspect-ratio: 1; margin-inline: auto; cursor: grab; touch-action: pan-y; user-select: none; }
+.globe-box.dragging { cursor: grabbing; }
+html[data-motion="off"] .globe-box { cursor: default; }
+.globe-box .globe-earth { position: absolute; inset: 13%; width: 74%; height: 74%; opacity: 0; transition: opacity 1.2s ease; }
+.globe-box.ready .globe-earth { opacity: 1; }
+.globe-box .globe-orbits { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+/* البديل الثابت: نفس حجم الكرة المرسومة (74% × 0.8 ≈ 59%) */
+.globe-box .fallback { position: absolute; inset: 20.4%; border-radius: 50%; border: 1px solid var(--color-line); background: radial-gradient(circle at 34% 30%, #2c2c2c, #101010 60%, #060606); box-shadow: 0 0 60px rgba(237, 237, 237, 0.06); transition: opacity 0.8s ease; }
 .globe-box .fallback::after { content: ""; position: absolute; inset-block-start: 43%; left: 62%; width: 8px; height: 8px; border-radius: 50%; background: var(--color-gold); box-shadow: 0 0 0 6px rgba(197, 164, 99, 0.18); }
 .globe-box.ready .fallback { opacity: 0; }
 .place .copy { display: flex; flex-direction: column; gap: 18px; }
 .place .cities { font-size: 0.85rem; color: var(--color-ink-muted); letter-spacing: 0.04em; }
-@media (max-width: 900px) { .place .wrap { grid-template-columns: minmax(0, 1fr); } .globe-box { width: min(86%, 380px); } }
+@media (max-width: 900px) { .place .wrap { grid-template-columns: minmax(0, 1fr); } .globe-box { width: min(100%, 460px); } }
 
 /* ---------- الأسئلة الشائعة ---------- */
 .faq { border-block-start: 1px solid var(--color-line); max-width: 860px; }
@@ -405,8 +420,10 @@ html[lang="ar"] .faq summary { line-height: 1.6; }
 .faq details p { padding-block-end: 24px; max-width: 64ch; }
 
 /* ---------- نداء الختام ---------- */
-.closing { text-align: center; }
-.closing .wrap { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+/* مساحة إضافية في الأسفل لحافة الكوكب (Horizon Bloom) حتى لا يلمس الضوء الأزرار */
+.closing { text-align: center; overflow: clip; padding-block-end: calc(var(--section) + clamp(120px, 18vw, 240px)); }
+.closing .wrap { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.horizon-bloom { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
 .closing h2 { font-size: var(--fs-h1); max-width: 18ch; }
 .closing .ctas { justify-content: center; margin-block-start: 10px; }
 .closing .mark-big { width: 64px; height: 72px; color: var(--color-ink); }
