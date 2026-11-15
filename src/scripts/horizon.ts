@@ -20,7 +20,6 @@ import { motionOn, onMotionChange, fitCanvas, rng } from './motion';
 const CORE = '255,247,230', GOLD_BRIGHT = '221,194,136', GOLD = '197,164,99', GOLD_DEEP = '143,113,61';
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
-const easeOut = (x: number) => 1 - Math.pow(1 - x, 3);
 
 /**
  * خيط ضوء واحد مرسوم مسبقاً مرة واحدة (sprite): ساطع في الأسفل ويتلاشى للأعلى، وحوافه الجانبية ناعمة.
@@ -71,19 +70,24 @@ function setup(canvas: HTMLCanvasElement) {
     return { R, limbY, cx: w / 2, cy: limbY + R };
   }
 
-  /** تقدّم الشروق حسب التمرير: يبدأ حين يدخل القسم من الأسفل ويكتمل حين يظهر كاملاً */
+  /**
+   * تقدّم الشروق حسب التمرير: يبدأ (0) لحظة دخول القسم من أسفل الشاشة،
+   * ويستمر بالازدياد حتى آخر بكسل في الصفحة (1). كلما اقترب الزائر من النهاية زاد الضوء وارتفعت الخيوط.
+   */
   function scrollTarget() {
-    const r = host.getBoundingClientRect(), vh = window.innerHeight;
-    return clamp((vh - r.top) / Math.max(1, Math.min(r.height, vh)), 0, 1);
+    const vh = window.innerHeight, y = window.scrollY;
+    const startY = host.getBoundingClientRect().top + y - vh;              // موضع التمرير لحظة ظهور القسم
+    const endY = document.documentElement.scrollHeight - vh;                // آخر موضع تمرير ممكن
+    return clamp((y - startY) / Math.max(1, endY - startY), 0, 1);
   }
 
   function draw() {
     if (!ctx || !w) return;
     const c = ctx, { R, limbY, cx, cy } = geometry();
-    const e = easeOut(p);
-    const I = e * (1 + 0.04 * Math.sin(t * 0.7)); // شدة الضوء مع "تنفس" خفيف
-    const spread = w * 0.5;                        // نصف عرض الستارة
-    const maxLen = clamp(h * 0.34, 140, 340);      // أقصى ارتفاع للخيوط (يبقى تحت الأزرار)
+    const I = Math.pow(p, 0.8) * (1 + 0.04 * Math.sin(t * 0.7)); // الشدة تزداد بثبات حتى نهاية الصفحة
+    const grow = Math.pow(p, 1.15);               // ارتفاع الخيوط: يتسارع قرب النهاية
+    const spread = w * (0.36 + 0.14 * p);          // الستارة تتسع أيضاً مع التمرير
+    const maxLen = clamp(h * 0.6, 220, 560);       // أقصى ارتفاع للخيوط عند نهاية الصفحة
 
     c.clearRect(0, 0, w, h);
     c.globalCompositeOperation = 'lighter'; // الضوء يُجمع فوق بعضه مثل الضوء الحقيقي
@@ -102,7 +106,7 @@ function setup(canvas: HTMLCanvasElement) {
       const yb = cy - Math.sqrt(R * R - dx * dx);           // نقطة الحافة تحت الخيط
       const env = Math.exp(-ray.u * ray.u * 1.5);            // أقوى في الوسط، وتمتد لنحو نصف العرض
       const wave = 0.72 + 0.28 * Math.sin(t * ray.sp + ray.ph);
-      const len = maxLen * ray.len * env * wave * e;
+      const len = maxLen * ray.len * env * wave * grow;
       if (len < 3) continue;
       const ang = Math.atan2(dx, R);                         // ميل الخيط مع انحناء الحافة
       c.globalAlpha = Math.min(1, 0.42 * ray.a * env * (0.55 + 0.45 * wave) * I);
