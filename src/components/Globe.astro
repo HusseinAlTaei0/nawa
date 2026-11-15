@@ -1,5 +1,8 @@
 ---
-/** "بغداد من المدار": كرة أرضية داكنة بأقواس ذهبية من بغداد إلى مدن المنطقة. السلوك في src/scripts/globe.ts */
+/**
+ * "بغداد من المدار": كرة أرضية داكنة بنقاط بيضاء، مدارات ذهبية بمذنّبات، وأقواس من بغداد إلى مدن المنطقة.
+ * السلوك في src/scripts/globe.ts. الصندوق زخرفي (aria-hidden) والمعلومة نفسها مكتوبة في النص بجانبه.
+ */
 import { home } from '../data/pages';
 import { gold } from '../i18n/ui';
 import type { Lang } from '../config/site';
@@ -17,7 +20,8 @@ const c = home[lang].place;
     </div>
     <div class="globe-box" data-globe aria-hidden="true">
       <div class="fallback"></div>
-      <canvas></canvas>
+      <canvas class="globe-earth"></canvas>
+      <canvas class="globe-orbits"></canvas>
     </div>
   </div>
 </section>
