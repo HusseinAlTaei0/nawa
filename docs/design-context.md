@@ -18,7 +18,7 @@ Update it here when a decision changes, not inside each agent.
 - Content: templates with sample content flagged `draft: true`. Production never shows invented numbers, logos or testimonials.
 - Contact: Netlify Forms. WhatsApp is the primary channel.
 - Motion level: calm luxury, about 80% clarity and proof, 20% signature moments. One "wow" per page, and it must explain the offer.
-- Signature pieces already built: gold star cloud behind every page (`sky.ts`), gold point-cloud planet hero with pointer repel (`heroplanet.ts`), opening screen where the logo draws itself, service cards with real planet photos (`rail.ts`), hexagon orbit on the Services page (`orbit.ts`), eclipse language switch and moon cursor (`site.ts`), launch trail on form success (`form.ts`), Baghdad globe (`globe.ts`).
+- Signature pieces already built: gold star cloud behind every page (`sky.ts`), gold point-cloud planet hero with pointer repel (`heroplanet.ts`), opening screen where the logo draws itself, service cards with real planet photos (`rail.ts`), hexagon orbit on the Services page (`orbit.ts`), eclipse language switch and moon cursor (`site.ts`), launch trail on form success (`form.ts`), Baghdad globe (`globe.ts`), sunrise over a dark planet's edge behind the closing call to action on every page (`horizon.ts`, our own Canvas 2D take on React Bits Pro's "Horizon Bloom", rises with scroll).
 
 ## Visual identity
 - Space: stars, planets, orbits, galaxies, shooting stars. Rendered quietly, never as sci-fi cliche.

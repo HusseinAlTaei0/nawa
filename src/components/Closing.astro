@@ -2,6 +2,7 @@
 /** نداء الختام في آخر كل صفحة: الشعار + عنوان + زر المشروع + واتساب */
 import Mark from './Mark.astro';
 import PlanetButton from './PlanetButton.astro';
+import HorizonBloom from './HorizonBloom.astro';
 import { ui, path, gold } from '../i18n/ui';
 import { whatsappLink, type Lang } from '../config/site';
 interface Props { lang: Lang; title: string; text?: string; wa?: string; }
@@ -9,6 +10,8 @@ const { lang, title, text, wa } = Astro.props;
 const t = ui[lang];
 ---
 <section class="section closing">
+  <!-- شروق فوق حافة كوكب: خلف المحتوى، زخرفي فقط -->
+  <HorizonBloom />
   <div class="wrap" data-reveal>
     <Mark class="mark-big" />
     <h2 set:html={gold(title)} />

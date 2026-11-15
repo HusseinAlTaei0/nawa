@@ -405,8 +405,10 @@ html[lang="ar"] .faq summary { line-height: 1.6; }
 .faq details p { padding-block-end: 24px; max-width: 64ch; }
 
 /* ---------- نداء الختام ---------- */
-.closing { text-align: center; }
-.closing .wrap { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+/* مساحة إضافية في الأسفل لحافة الكوكب (Horizon Bloom) حتى لا يلمس الضوء الأزرار */
+.closing { text-align: center; overflow: clip; padding-block-end: calc(var(--section) + clamp(120px, 18vw, 240px)); }
+.closing .wrap { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.horizon-bloom { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
 .closing h2 { font-size: var(--fs-h1); max-width: 18ch; }
 .closing .ctas { justify-content: center; margin-block-start: 10px; }
 .closing .mark-big { width: 64px; height: 72px; color: var(--color-ink); }
