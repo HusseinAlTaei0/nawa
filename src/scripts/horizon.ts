@@ -10,6 +10,7 @@
  *  4) الكوكب المعتم + انعكاس خافت للضوء على سطحه تحت الحافة
  *  5) الحافة المضيئة على العرض كله (عدة طبقات = توهج بدون blur مكلف)
  *
+ * - المؤشر: الخيوط تحت المؤشر تطول وتسطع وتميل نحوه، ويتلاشى التأثير بهدوء عند خروجه
  * - التقدّم يتبع التمرير (لا scroll-jacking)، والرسم يتوقف خارج الشاشة أو عند إخفاء التبويب
  * - عند إيقاف الحركة يُرسم إطار ثابت واحد (الشروق مكتمل)
  * - المشهد متناظر، فلا يحتاج انعكاساً في العربية
@@ -50,6 +51,8 @@ function setup(canvas: HTMLCanvasElement) {
   const streak = makeStreak();
   let w = 0, h = 0, ctx: CanvasRenderingContext2D | null = null;
   let p = 0, t = 0; // p: تقدّم الشروق 0→1 (ناعم)، t: الزمن لتموّج الخيوط
+  // المؤشر: px موضعه الأفقي داخل الـ canvas، hp حضوره (0→1 بنعومة) حتى يظهر التأثير ويختفي بهدوء
+  let px = 0, hp = 0, pointerIn = false;
 
   // خيوط الستارة: موضع على الحافة (u من -1 إلى 1)، طول، عرض، سرعة وطور التموّج. ثابتة لكل زيارة (بذرة ثابتة).
   type Ray = { u: number; len: number; wid: number; sp: number; ph: number; a: number };
@@ -106,10 +109,13 @@ function setup(canvas: HTMLCanvasElement) {
       const yb = cy - Math.sqrt(R * R - dx * dx);           // نقطة الحافة تحت الخيط
       const env = Math.exp(-ray.u * ray.u * 1.5);            // أقوى في الوسط، وتمتد لنحو نصف العرض
       const wave = 0.72 + 0.28 * Math.sin(t * ray.sp + ray.ph);
-      const len = maxLen * ray.len * env * wave * grow;
+      // تأثير المؤشر: الخيوط القريبة منه أفقياً تطول وتسطع وتميل نحوه قليلاً (يعمل حتى قبل اكتمال الشروق)
+      const b = hp * Math.exp(-(((x - px) / (w * 0.075)) ** 2));
+      const len = maxLen * ray.len * wave * (env * grow + 0.5 * b);
       if (len < 3) continue;
-      const ang = Math.atan2(dx, R);                         // ميل الخيط مع انحناء الحافة
-      c.globalAlpha = Math.min(1, 0.42 * ray.a * env * (0.55 + 0.45 * wave) * I);
+      const lean = b * 0.14 * Math.tanh((px - x) / (w * 0.04));
+      const ang = Math.atan2(dx, R) + lean;                  // ميل الخيط مع انحناء الحافة + انجذاب للمؤشر
+      c.globalAlpha = Math.min(1, 0.42 * ray.a * (0.55 + 0.45 * wave) * (env * I + 0.75 * b));
       c.save(); c.translate(x, yb + 2); c.rotate(ang);
       c.drawImage(streak, -ray.wid / 2, -len, ray.wid, len);
       c.restore();
@@ -169,6 +175,7 @@ function setup(canvas: HTMLCanvasElement) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     t += dt;
     p += (scrollTarget() - p) * Math.min(1, dt * 2.6); // تتبّع ناعم للتمرير
+    hp += ((pointerIn ? 1 : 0) - hp) * Math.min(1, dt * 3);  // ظهور/اختفاء ناعم لتأثير المؤشر
     draw();
   }
   const start = () => { if (!raf && motionOn() && visible && !document.hidden) { last = performance.now(); raf = requestAnimationFrame(frame); } };
@@ -183,6 +190,14 @@ function setup(canvas: HTMLCanvasElement) {
     if (narrowChanged) buildRays(); // عدد خيوط أقل على الموبايل
     if (motionOn()) { p = scrollTarget(); draw(); } else still();
   };
+
+  // المؤشر على القسم كله (الـ canvas نفسه لا يستقبل أحداثاً حتى لا يحجب الأزرار)
+  const setPointer = (e: PointerEvent) => { px = e.clientX - canvas.getBoundingClientRect().left; pointerIn = true; };
+  host.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse' || e.buttons || e.pressure > 0) setPointer(e); });
+  host.addEventListener('pointerdown', setPointer);
+  host.addEventListener('pointerleave', () => { pointerIn = false; });
+  host.addEventListener('pointerup', (e) => { if (e.pointerType !== 'mouse') pointerIn = false; });
+  host.addEventListener('pointercancel', () => { pointerIn = false; });
 
   new ResizeObserver(resize).observe(canvas);
   new IntersectionObserver((es) => { visible = es[0].isIntersecting; visible ? start() : stop(); }, { rootMargin: '80px 0px' }).observe(canvas);

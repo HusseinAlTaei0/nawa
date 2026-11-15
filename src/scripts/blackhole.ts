@@ -2,7 +2,9 @@
  * الثقب الأسود (صفحة 404): "هذه الصفحة خرجت من مدارها" — سحبها ثقب أسود.
  * المشهد: قرص تراكم رفيع يمتد على عرض الشاشة، حلقة فوتونات مضيئة حول أفق حدث أسود،
  * و"جناحان" من الضوء المنحني يلتقيان بالقرص (شكل العين).
- * التفاعل: الثقب يتبع المؤشر بنابض ناعم، والضوء الذي يتركه خلفه يتمدد كالعجين ويبقى متصلاً به
+ * القرص يتموّج بهدوء، وسماكته تزيد قرب الثقب وترقّ نحو الأطراف.
+ * التفاعل: الثقب يتبع المؤشر بنابض ناعم. أفقياً: الضوء الذي يتركه خلفه يتمدد كالعجين ويبقى متصلاً به.
+ * عمودياً: القرص ينحني في الاتجاه المعاكس ويلتف حول الثقب (مثل صور المرجع)
  * (شكل metaball بين موضع الضوء الأصلي والثقب)، ثم يعود كل شيء لمكانه عند ابتعاد المؤشر.
  * (مستوحى من قالب Gravitas على Framer، مكتوب من الصفر بـ Canvas 2D وبألوان NAWA: أبيض + ذهبي فقط)
  *
@@ -52,6 +54,9 @@ function setup(canvas: HTMLCanvasElement) {
   let ox = 0, oy = 0, vx = 0, vy = 0, tx = 0, ty = 0;
   let pointerOn = false;
   const blob = document.createElement('canvas'); // طبقة "العجين" منخفضة الدقة
+  const haze = document.createElement('canvas'); // طبقة توهج القرص منخفضة الدقة
+  // نقاط شريط القرص (تُعاد تهيئتها عند تغيّر العرض): x، y، السماكة، الشدة
+  let xs = new Float32Array(0), ys = new Float32Array(0), th = new Float32Array(0), fade = new Float32Array(0);
 
   function draw() {
     if (!ctx || !w) return;
@@ -63,19 +68,50 @@ function setup(canvas: HTMLCanvasElement) {
     c.clearRect(0, 0, w, h);
     c.globalCompositeOperation = 'lighter';
 
-    // 1) قرص التراكم: خط رفيع على عرض الشاشة، أسطع قرب الثقب، بعدة طبقات توهج
-    const disc = c.createLinearGradient(0, 0, w, 0);
-    const mid = Math.min(0.9, Math.max(0.1, hx / w));
-    disc.addColorStop(0, `rgba(${GOLD},0)`);
-    disc.addColorStop(Math.max(0.01, mid - 0.32), `rgba(${GOLD_BRIGHT},0.35)`);
-    disc.addColorStop(mid, `rgba(${CORE},1)`);
-    disc.addColorStop(Math.min(0.99, mid + 0.32), `rgba(${GOLD_BRIGHT},0.35)`);
-    disc.addColorStop(1, `rgba(${GOLD},0)`);
-    c.fillStyle = disc;
-    for (const [th, a] of [[22, 0.05], [9, 0.12], [3.5, 0.4], [1.4, 1]] as const) {
-      c.globalAlpha = a * breathe;
-      c.beginPath(); c.ellipse(ax, ay, w * 0.5, th, 0, 0, Math.PI * 2); c.fill();
+    // 1) قرص التراكم: خط على عرض الشاشة يتموّج بهدوء، سميك قرب الثقب ويرقّ تدريجياً كلما ابتعد.
+    //    عندما يتحرك الثقب للأعلى أو الأسفل ينحني القرص في الاتجاه المعاكس ويلتف حوله (عدسة الجاذبية).
+    const sig = R * 2.3;                                       // عرض منطقة الانحناء حول الثقب
+    const n = Math.ceil(w / 4) + 1;
+    if (xs.length !== n) { xs = new Float32Array(n); ys = new Float32Array(n); th = new Float32Array(n); fade = new Float32Array(n); }
+    for (let i = 0; i < n; i++) {
+      const x = (i / (n - 1)) * w, d = (x - hx) / sig, g = Math.exp(-d * d);
+      const far = Math.min(1, Math.abs(x - hx) / (w * 0.5));   // 0 عند الثقب → 1 عند الطرف البعيد
+      // موجة هادئة: موجتان بطيئتان بطولين مختلفين، أوضح بعيداً عن الثقب
+      const wave = (Math.sin(x * 0.011 - t * 0.9) * 2.2 + Math.sin(x * 0.0047 + t * 0.55) * 1.6) * (0.35 + 0.65 * (1 - g));
+      xs[i] = x;
+      ys[i] = ay - oy * g + wave;
+      th[i] = 0.7 + R * 0.17 * Math.exp(-(((x - hx) / (R * 3.4)) ** 2)) + R * 0.05 * (1 - far); // السماكة
+      fade[i] = Math.pow(1 - far, 1.4);                        // الشدة تخفت نحو الأطراف
     }
+    // نرسم الشريط بعدة طبقات (توهج واسع خافت → قلب رفيع ساطع)، كلها بنفس الشكل
+    const disc = c.createLinearGradient(0, 0, w, 0);
+    const mid = Math.min(0.95, Math.max(0.05, hx / w));
+    disc.addColorStop(0, `rgba(${GOLD},0.25)`);
+    disc.addColorStop(Math.max(0.01, mid - 0.3), `rgba(${GOLD_BRIGHT},0.8)`);
+    disc.addColorStop(mid, `rgba(${CORE},1)`);
+    disc.addColorStop(Math.min(0.99, mid + 0.3), `rgba(${GOLD_BRIGHT},0.8)`);
+    disc.addColorStop(1, `rgba(${GOLD},0.25)`);
+    const band = (g: CanvasRenderingContext2D, k: number) => {
+      g.beginPath();
+      for (let i = 0; i < n; i++) { const hw = th[i] * k * (0.25 + 0.75 * fade[i]) / 2; i ? g.lineTo(xs[i], ys[i] - hw) : g.moveTo(xs[i], ys[i] - hw); }
+      for (let i = n - 1; i >= 0; i--) { const hw = th[i] * k * (0.25 + 0.75 * fade[i]) / 2; g.lineTo(xs[i], ys[i] + hw); }
+      g.closePath(); g.fill();
+    };
+    // طبقات التوهج العريضة على طبقة منخفضة الدقة ثم تُكبَّر: حواف ضبابية ناعمة بدل شريط رمادي حاد
+    const gw = Math.ceil(w / BLOB_SCALE), gh = Math.ceil(h / BLOB_SCALE);
+    if (haze.width !== gw || haze.height !== gh) { haze.width = gw; haze.height = gh; }
+    const hz = haze.getContext('2d')!;
+    hz.setTransform(1 / BLOB_SCALE, 0, 0, 1 / BLOB_SCALE, 0, 0);
+    hz.clearRect(0, 0, w, h);
+    hz.fillStyle = disc;
+    hz.globalAlpha = 0.07 * breathe; band(hz, 6);
+    hz.globalAlpha = 0.16 * breathe; band(hz, 2.6);
+    c.imageSmoothingEnabled = true;
+    c.drawImage(haze, 0, 0, w, h);
+    // القلب الرفيع الساطع بدقة كاملة
+    c.fillStyle = disc;
+    c.globalAlpha = 0.5 * breathe; band(c, 1.3);
+    c.globalAlpha = breathe; band(c, 0.55);
     c.globalAlpha = 1;
 
     // 2) الجناحان: الضوء المنحني فوق وتحت الثقب يلتقي بالقرص على الجانبين (شكل العين)
@@ -98,7 +134,9 @@ function setup(canvas: HTMLCanvasElement) {
     c.fillStyle = ring; c.beginPath(); c.arc(hx, hy, R * 1.7, 0, Math.PI * 2); c.fill();
 
     // 4) "العجين": إذا ابتعد الثقب عن المركز، يتمدد الضوء من المركز إليه ويبقى متصلاً
-    const dist = Math.hypot(ox, oy);
+    // يعتمد على الإزاحة الأفقية فقط: الحركة العمودية تحني القرص (أعلاه) بدل أن تسحب الضوء
+    const dist = Math.abs(ox);
+    const ayA = ay - oy * Math.exp(-(((ax - hx) / sig) ** 2)); // موضع القرص تحت المركز
     if (dist > R * 0.35) {
       const k = Math.min(1, (dist - R * 0.35) / (R * 1.2));   // يظهر تدريجياً مع المسافة
       const rA = Math.min(R * 0.95, dist * 0.38);              // كتلة الضوء المتروكة: تكبر مع المسافة
@@ -115,9 +153,9 @@ function setup(canvas: HTMLCanvasElement) {
       fill.addColorStop(0.55, `rgba(${CORE},${0.85 * k})`);
       fill.addColorStop(1, `rgba(${GOLD_BRIGHT},${0.9 * k})`);
       b2.fillStyle = fill;
-      b2.beginPath(); b2.arc(ax, ay, rA, 0, Math.PI * 2); b2.fill();
+      b2.beginPath(); b2.arc(ax, ayA, rA, 0, Math.PI * 2); b2.fill();
       b2.beginPath(); b2.arc(hx, hy, rH, 0, Math.PI * 2); b2.fill();
-      const b = bridge({ x: ax, y: ay }, rA, { x: hx, y: hy }, rH);
+      const b = bridge({ x: ax, y: ayA }, rA, { x: hx, y: hy }, rH);
       if (b) {
         b2.beginPath();
         b2.moveTo(b.p1.x, b.p1.y);
@@ -161,13 +199,13 @@ function setup(canvas: HTMLCanvasElement) {
     if (f) { w = f.w; h = f.h; ctx = f.ctx; draw(); }
   };
 
-  // ---------- المؤشر: الثقب يتبعه أفقياً بحرية، وعمودياً قليلاً ----------
+  // ---------- المؤشر: الثقب يتبعه أفقياً بحرية، وعمودياً ضمن حد ----------
   const setTarget = (e: PointerEvent) => {
     if (!motionOn()) return;
     const b = canvas.getBoundingClientRect();
     const px = e.clientX - b.left - w / 2, py = e.clientY - b.top - h / 2;
     tx = Math.max(-w * 0.32, Math.min(w * 0.32, px * 0.7));
-    ty = Math.max(-h * 0.12, Math.min(h * 0.12, py * 0.25));
+    ty = Math.max(-h * 0.24, Math.min(h * 0.24, py * 0.6)); // عمودياً بحرية أقل حتى يبقى الثقب داخل المشهد
     pointerOn = true;
   };
   host.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse' || e.buttons || e.pressure > 0) setTarget(e); });

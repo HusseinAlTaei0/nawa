@@ -393,21 +393,32 @@ html[lang="ar"] .svc-row .idx { font-style: normal; }
 @media (max-width: 760px) { .stage .body, .stages.compact .stage .body { grid-template-columns: minmax(0, 1fr); } }
 
 /* ---------- الكرة الأرضية (بغداد من المدار) ---------- */
-.place .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 72px); align-items: center; }
-/* الكرة: canvas الأرض في المنتصف بنسبة 74% (EARTH_FRAC في globe.ts)، وطبقة المدارات تغطي الصندوق كله */
-.globe-box { position: relative; width: min(100%, 600px); aspect-ratio: 1; margin-inline: auto; cursor: grab; touch-action: pan-y; user-select: none; }
+/* عمود الكرة أعرض قليلاً من عمود النص حتى تظهر الكرة أكبر بتوازن */
+.place .wrap { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: clamp(24px, 4vw, 56px); align-items: center; }
+/* الكرة: canvas الأرض في المنتصف بنسبة 84% (EARTH_FRAC في globe.ts)، وطبقة الأقواس تغطي الصندوق كله */
+.globe-box { position: relative; width: min(100%, 680px); aspect-ratio: 1; margin-inline: auto; cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 .globe-box.dragging { cursor: grabbing; }
+.globe-box.on-city:not(.dragging) { cursor: pointer; }
 html[data-motion="off"] .globe-box { cursor: default; }
-.globe-box .globe-earth { position: absolute; inset: 13%; width: 74%; height: 74%; opacity: 0; transition: opacity 1.2s ease; }
+.globe-box .globe-earth { position: absolute; inset: 8%; width: 84%; height: 84%; opacity: 0; transition: opacity 1.2s ease; }
 .globe-box.ready .globe-earth { opacity: 1; }
-.globe-box .globe-orbits { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-/* البديل الثابت: نفس حجم الكرة المرسومة (74% × 0.8 ≈ 59%) */
-.globe-box .fallback { position: absolute; inset: 20.4%; border-radius: 50%; border: 1px solid var(--color-line); background: radial-gradient(circle at 34% 30%, #2c2c2c, #101010 60%, #060606); box-shadow: 0 0 60px rgba(237, 237, 237, 0.06); transition: opacity 0.8s ease; }
+.globe-box .globe-arcs { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+/* اسم المدينة: فوق النقطة مباشرة، يظهر بتلاشٍ ناعم */
+.globe-label {
+  position: absolute; z-index: 2; pointer-events: none; white-space: nowrap;
+  translate: -50% calc(-100% - 12px); padding: 5px 10px; border: 1px solid var(--color-gold-deep); border-radius: 2px;
+  background: rgba(10, 10, 10, 0.88); color: var(--color-ink); font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase;
+  opacity: 0; transition: opacity 0.2s ease;
+}
+.globe-label.on { opacity: 1; }
+html[lang="ar"] .globe-label { font-size: 0.85rem; letter-spacing: 0; text-transform: none; }
+/* البديل الثابت: نفس حجم الكرة المرسومة (84% × 0.8 ≈ 67%) */
+.globe-box .fallback { position: absolute; inset: 16.4%; border-radius: 50%; border: 1px solid var(--color-line); background: radial-gradient(circle at 34% 30%, #2c2c2c, #101010 60%, #060606); box-shadow: 0 0 60px rgba(237, 237, 237, 0.06); transition: opacity 0.8s ease; }
 .globe-box .fallback::after { content: ""; position: absolute; inset-block-start: 43%; left: 62%; width: 8px; height: 8px; border-radius: 50%; background: var(--color-gold); box-shadow: 0 0 0 6px rgba(197, 164, 99, 0.18); }
 .globe-box.ready .fallback { opacity: 0; }
 .place .copy { display: flex; flex-direction: column; gap: 18px; }
 .place .cities { font-size: 0.85rem; color: var(--color-ink-muted); letter-spacing: 0.04em; }
-@media (max-width: 900px) { .place .wrap { grid-template-columns: minmax(0, 1fr); } .globe-box { width: min(100%, 460px); } }
+@media (max-width: 900px) { .place .wrap { grid-template-columns: minmax(0, 1fr); } .globe-box { width: min(100%, 520px); } }
 
 /* ---------- الأسئلة الشائعة ---------- */
 .faq { border-block-start: 1px solid var(--color-line); max-width: 860px; }
