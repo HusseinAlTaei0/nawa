@@ -31,7 +31,7 @@ const isCurrent = (href: string) => here.startsWith(href);
     </nav>
     <div class="header-end">
       <a class="lang-link" href={switchLangPath(here, other)} lang={other} hreflang={other} aria-label={t.langSwitchLabel} data-lang-switch>{t.langSwitch}</a>
-      <PlanetButton href={path(lang, 'contact')} label={t.cta} size="sm" />
+      <PlanetButton href={path(lang, 'launch') + '?from=header'} label={t.ctaShort} size="sm" />
       <button class="burger" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label={t.menu} data-open={t.menu} data-close={t.close}><span></span></button>
     </div>
   </div>
@@ -42,7 +42,7 @@ const isCurrent = (href: string) => here.startsWith(href);
     <a href={path(lang, 'contact')}>{t.nav.contact}</a>
   </nav>
   <div class="menu-end">
-    <PlanetButton href={path(lang, 'contact')} label={t.cta} />
+    <PlanetButton href={path(lang, 'launch') + '?from=menu'} label={t.cta} />
     <PlanetButton href={whatsappLink(t.waDefault)} label={t.whatsapp} variant="ghost" external />
   </div>
 </div>

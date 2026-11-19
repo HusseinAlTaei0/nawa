@@ -22,7 +22,7 @@ const BASE = process.env.BASE || 'http://localhost:4321';
 const out = path.join(root, 'qa');
 mkdirSync(out, { recursive: true });
 
-const routes = ['', 'services/', 'services/ai-agents/', 'services/erp-systems/', 'work/', 'process/', 'about/', 'contact/'];
+const routes = ['', 'services/', 'services/ai-agents/', 'services/erp-systems/', 'work/', 'process/', 'about/', 'contact/', 'launch/', 'privacy/'];
 if (existsSync(path.join(root, 'dist/en/work/clinic-that-answers-itself/index.html'))) routes.push('work/clinic-that-answers-itself/');
 const sizes = [{ name: 'desktop', width: 1440, height: 900 }, { name: 'phone', width: 390, height: 844 }];
 const problems = [];
@@ -33,6 +33,8 @@ for (const size of sizes) {
   const ctx = await browser.newContext({ viewport: { width: size.width, height: size.height }, deviceScaleFactor: 1 });
   // نتخطى شاشة البداية في لقطات الصفحات (تُفحص لوحدها في الأسفل)
   await ctx.addInitScript(() => { try { sessionStorage.setItem('nawa-seen', '1'); } catch {} });
+  // astro preview لا يشغّل Netlify Functions: نرد على طلبات القياس محلياً (المسار الكامل يفحصه scripts/launch-e2e.mjs)
+  await ctx.route('**/api/launch/**', (r) => r.fulfill({ status: 202, contentType: 'application/json', body: '{"ok":true}' }));
   for (const lang of ['en', 'ar']) {
     for (const route of routes) {
       const url = `${BASE}/${lang}/${route}`, where = `${size.name} /${lang}/${route}`;

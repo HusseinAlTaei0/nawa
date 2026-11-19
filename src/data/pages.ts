@@ -230,6 +230,9 @@ export const contactPage = {
     success: `Your message is on its way. We reply ${site.replyTime.en}.`,
     fail: 'The message was not sent. Check your connection and try again, or message us on WhatsApp.',
     details: { email: 'Email', phone: 'Phone', address: 'Address', hours: 'Hours' },
+    testTitle: 'Not sure what to ask for?',
+    testText: 'Nine quick answers show where customers slip away and which step to take first. 60 seconds, free.',
+    testBtn: 'Discover why you are losing customers',
   },
   ar: {
     eyebrow: 'تواصل',
@@ -246,5 +249,84 @@ export const contactPage = {
     success: `رسالتك في طريقها إلينا. نرد ${site.replyTime.ar}.`,
     fail: 'لم تُرسل الرسالة. تحقق من الاتصال وحاول مجدداً، أو راسلنا على واتساب.',
     details: { email: 'البريد', phone: 'الهاتف', address: 'العنوان', hours: 'ساعات العمل' },
+    testTitle: 'مو متأكد شنو تحتاج؟',
+    testText: 'تسع أجوبة سريعة تبيّن وين يفلتون الزبائن وأي خطوة تبدي بيها. 60 ثانية، مجاناً.',
+    testBtn: 'اكتشف ليش تخسر زبائنك',
+  },
+} as const;
+
+/** صفحة الخصوصية (مطلوبة لأن الموقع يجمع بيانات اختبار "اكتشف ليش تخسر زبائنك") */
+export const privacyPage = {
+  en: {
+    eyebrow: 'Privacy',
+    title: 'Your data, *plainly.*',
+    lead: 'What we collect on this site, why, how long we keep it, and how to have it deleted.',
+    sections: [
+      { h: 'What we collect', p: [
+        'Diagnosis answers: the multiple-choice answers you give in "Discover why you are losing customers" (your type of business, message volume, reply time and similar). They describe your business, not you, and we store them without your name unless you choose to send your report.',
+        'Contact details, only if you give them: your name, business name, city and WhatsApp number, with the time you agreed to be contacted.',
+        'Basic usage: which step of the diagnosis you reached, which headline you saw, the page you came from, and whether you use a phone or a computer. We store a random identifier in your browser for this, not your name or IP address. Your IP address is turned into a one-way code that is only used to block abuse.',
+        'Contact form messages you send us.',
+      ] },
+      { h: 'Why', p: [
+        'To show you your result, send you your report and reply to you on WhatsApp if you asked us to.',
+        'To understand which questions help businesses most and improve the diagnosis and our services.',
+        'We never sell your data and never share it with advertisers.',
+      ] },
+      { h: 'Where it is kept', p: [
+        'Answers and contact details are stored in a secured database (Supabase) that only NAWA staff can read. New requests are also sent to our team on Telegram and by email so we can reply quickly.',
+      ] },
+      { h: 'How long', p: [
+        'We keep contact details for 12 months after our last conversation, then delete them. Anonymous diagnosis answers may be kept longer as statistics.',
+      ] },
+      { h: 'Your choices', p: [
+        'Reply STOP on WhatsApp at any time and we stop contacting you.',
+        'Ask us to see, correct or delete your data and we do it within 7 days.',
+        'Marketing messages are a separate, optional choice. Leaving that box empty means we only contact you about your result.',
+      ] },
+      { h: 'The law', p: [
+        'Iraq does not yet have a comprehensive data protection law in force. We follow practices modelled on the European GDPR anyway: clear consent, minimum data, a fixed retention period and deletion on request.',
+      ] },
+    ],
+    contactH: 'Contact',
+    contactP: 'Questions or deletion requests:',
+    waMsg: 'Hello NAWA, I have a privacy request.',
+    updated: 'Last updated',
+  },
+  ar: {
+    eyebrow: 'الخصوصية',
+    title: 'بياناتك، *بوضوح*',
+    lead: 'ماذا نجمع في هذا الموقع، ولماذا، وكم نحتفظ به، وكيف تطلب حذفه.',
+    sections: [
+      { h: 'ماذا نجمع', p: [
+        'أجوبة التشخيص: اختياراتك في "اكتشف ليش تخسر زبائنك" (نوع الشغل، عدد الرسائل، سرعة الرد وما شابه). هذه تصف شغلك وليس شخصك، ونحفظها بدون اسمك إلا إذا اخترت أن نرسل لك تقريرك.',
+        'بيانات التواصل، فقط إذا أعطيتها: اسمك، اسم الشغل، المدينة ورقم الواتساب، مع وقت موافقتك على التواصل.',
+        'استخدام بسيط: إلى أي خطوة وصلت في التشخيص، أي عنوان رأيت، من أي صفحة جئت، وهل تستخدم موبايل أو حاسبة. نحفظ لذلك معرّفاً عشوائياً في متصفحك، وليس اسمك أو عنوان الـ IP. عنوان الـ IP يتحول إلى رمز باتجاه واحد يُستخدم فقط لمنع الإساءة.',
+        'رسائل نموذج التواصل التي ترسلها لنا.',
+      ] },
+      { h: 'لماذا', p: [
+        'لنعرض لك نتيجتك، ونرسل تقريرك، ونرد عليك في الواتساب إذا طلبت ذلك.',
+        'لنفهم أي الأسئلة تفيد الشركات أكثر ونحسّن التشخيص وخدماتنا.',
+        'لا نبيع بياناتك أبداً ولا نشاركها مع المعلنين.',
+      ] },
+      { h: 'أين تُحفظ', p: [
+        'الأجوبة وبيانات التواصل محفوظة في قاعدة بيانات مؤمّنة (Supabase) لا يقرأها إلا فريق نوى. الطلبات الجديدة تصل لفريقنا أيضاً على تلگرام وبالبريد حتى نرد بسرعة.',
+      ] },
+      { h: 'كم نحتفظ بها', p: [
+        'نحتفظ ببيانات التواصل 12 شهراً بعد آخر محادثة بيننا، ثم نحذفها. الأجوبة المجهولة قد تبقى أطول كإحصاءات.',
+      ] },
+      { h: 'خياراتك', p: [
+        'اكتب "توقف" في الواتساب بأي وقت ونتوقف عن التواصل.',
+        'اطلب أن ترى بياناتك أو تصححها أو تحذفها ونفعل ذلك خلال 7 أيام.',
+        'رسائل العروض خيار منفصل واختياري. ترك ذلك المربع فارغاً يعني أننا نتواصل معك بخصوص نتيجتك فقط.',
+      ] },
+      { h: 'القانون', p: [
+        'لا يوجد في العراق حتى الآن قانون شامل نافذ لحماية البيانات. نطبّق مع ذلك ممارسات مستوحاة من اللائحة الأوروبية GDPR: موافقة واضحة، أقل قدر من البيانات، مدة حفظ محددة، وحذف عند الطلب.',
+      ] },
+    ],
+    contactH: 'للتواصل',
+    contactP: 'أسئلة أو طلبات حذف:',
+    waMsg: 'مرحباً نوى، عندي طلب بخصوص الخصوصية.',
+    updated: 'آخر تحديث',
   },
 } as const;

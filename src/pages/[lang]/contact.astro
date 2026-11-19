@@ -9,7 +9,7 @@ import Base from '../../layouts/Base.astro';
 import PlanetButton from '../../components/PlanetButton.astro';
 import { contactPage } from '../../data/pages';
 import { services } from '../../data/services';
-import { ui, gold } from '../../i18n/ui';
+import { ui, gold, path } from '../../i18n/ui';
 import { LANGS, site, whatsappLink, type Lang } from '../../config/site';
 
 export function getStaticPaths() { return LANGS.map((lang) => ({ params: { lang } })); }
@@ -33,6 +33,11 @@ const formName = `contact-${lang}`;
           <h2 style="font-size:var(--fs-h3)">{c.waTitle}</h2>
           <p>{c.waText}</p>
           <PlanetButton href={whatsappLink(t.waDefault)} label={c.waBtn} external />
+        </div>
+        <div class="contact-test">
+          <h2 style="font-size:var(--fs-h3)">{c.testTitle}</h2>
+          <p>{c.testText}</p>
+          <PlanetButton href={path(lang, 'launch') + '?from=contact'} label={c.testBtn} variant="ghost" />
         </div>
         <dl>
           <dt>{c.details.email}</dt><dd><a href={`mailto:${site.email}`}><bdi dir="ltr">{site.email}</bdi></a></dd>

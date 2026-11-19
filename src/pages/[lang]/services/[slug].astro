@@ -32,7 +32,7 @@ const others = services.filter((x) => x.slug !== svc.slug);
         <h1 data-reveal style="--i:1" set:html={gold(s.title)} />
         <p class="lead" data-reveal style="--i:2">{s.intro}</p>
         <div class="ctas" data-reveal style="--i:3">
-          <PlanetButton href={path(lang, 'contact') + `?service=${svc.slug}`} label={t.cta} />
+          <PlanetButton href={path(lang, 'launch') + `?service=${svc.slug}&from=service`} label={t.cta} />
           <PlanetButton href={whatsappLink(s.wa)} label={L.ask} variant="ghost" external />
         </div>
       </div>

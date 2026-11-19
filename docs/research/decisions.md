@@ -23,7 +23,17 @@ Date: 13 November 2026. Where a research report disagrees with this file, this f
 | Still-image tier | Reduced motion, Save-Data, 2g/3g, or 2 GB of memory or less | The plan said 4 GB; lowered so mid-range phones keep the moving stars |
 | Old site | Preserved in git history at commit `01b0769` (local tag `v1-legacy`), then removed from the working tree | |
 
+| Call to action (Nov 19, 2026) | Every "Start a project" button now leads to the "Discover why you are losing customers" diagnosis (`/[lang]/launch/`): optional 6-second rush warm-up (B) + 9 questions that build the visitor's planet (A, the foundation). Partial result free, full report after a WhatsApp number | Research: `docs/research/04-interactive-cta.md`. WhatsApp and the contact form stay for visitors ready to talk |
+| CTA copy | Owner's headline "اكتشف ليش تخسر زبائنك" / "Discover why you are losing customers", A/B tested against "كم زبون ضاع منك هالأسبوع؟" | Variant stored per visitor (`nawa-cta`), saved on every visit, session and lead |
+| Result | Fixed formula now (`engine.ts`), hybrid later (the same structured result narrated by Claude) | Every number is a conservative range with visible, editable assumptions |
+| Data | Supabase (RLS locked, written only by the Netlify Function with the service key) | Netlify Forms stays for the contact form only |
+| Lead alerts | Telegram (instant, with a reply-on-WhatsApp button) and email (Resend) | The WhatsApp Business API is not used: the visitor starts the chat with a pre-filled result code |
+| Privacy | New `/privacy` page: GDPR-style practice (consent, 12-month retention, deletion on request) | Iraq has no data protection law in force yet |
+
 ## Open items for the owner
+- Launch diagnosis: confirm the per-industry presets in `PRESETS` (`src/scripts/launch/engine.ts`): value of a new customer in IQD and the share of inquiries that become customers.
+- Launch diagnosis: apply the Supabase migration, create the Telegram bot and Resend key, and set the environment variables listed in the README.
+- Launch diagnosis: share the questions you ask in real discovery calls today so the 9 questions can be tuned to them.
 - Confirm the Najwa Arabic licence allows web embedding.
 - Check the Netlify site settings: "Base directory" must be empty now that the project is at the repo root.
 - Confirm you hold the rights to the four planet images carried over from the old site (Earth, Mars, the violet planet, the Moon). Jupiter and Saturn are NASA/JPL public-domain images.
