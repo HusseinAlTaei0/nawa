@@ -172,7 +172,8 @@ function setup(canvas: HTMLCanvasElement) {
   let raf = 0, last = 0, visible = false;
   function frame(now: number) {
     raf = requestAnimationFrame(frame);
-    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    // dt لا يكون سالباً أبداً: طابع rAF قد يسبق performance.now() في أول إطار، وتقدّم سالب يجعل الشدة NaN
+    const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
     t += dt;
     p += (scrollTarget() - p) * Math.min(1, dt * 2.6); // تتبّع ناعم للتمرير
     hp += ((pointerIn ? 1 : 0) - hp) * Math.min(1, dt * 3);  // ظهور/اختفاء ناعم لتأثير المؤشر

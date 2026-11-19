@@ -3,6 +3,7 @@
 import Mark from './Mark.astro';
 import PlanetButton from './PlanetButton.astro';
 import HorizonBloom from './HorizonBloom.astro';
+import AbSwap from './AbSwap.astro';
 import { ui, path, gold } from '../i18n/ui';
 import { whatsappLink, type Lang } from '../config/site';
 interface Props { lang: Lang; title: string; text?: string; wa?: string; }
@@ -17,8 +18,31 @@ const t = ui[lang];
     <h2 set:html={gold(title)} />
     {text && <p class="lead">{text}</p>}
     <div class="ctas">
-      <PlanetButton href={path(lang, 'contact')} label={t.cta} />
+      <PlanetButton href={path(lang, 'launch') + '?from=closing'} label={t.cta} labelB={t.ctaB} class="cta-launch" />
       <PlanetButton href={whatsappLink(wa ?? t.waDefault)} label={t.whatsapp} variant="ghost" external />
     </div>
+    <AbSwap selector=".closing .cta-launch .btn-label" />
   </div>
 </section>
+<script is:inline>
+  // قياس اختبار A/B: مرة واحدة لكل جلسة، عندما يظهر زر الدعوة فعلاً على الشاشة (sendBeacon، بدون أي بيانات شخصية)
+  (function () {
+    var btn = document.querySelector('.closing .cta-launch');
+    if (!btn || !('IntersectionObserver' in window) || !navigator.sendBeacon) return;
+    try { if (sessionStorage.getItem('nawa-saw')) return; } catch (e) { return; }
+    var io = new IntersectionObserver(function (es) {
+      if (!es[0].isIntersecting) return; io.disconnect();
+      var anon, v;
+      try {
+        sessionStorage.setItem('nawa-saw', '1');
+        anon = localStorage.getItem('nawa-anon');
+        if (!anon && crypto.randomUUID) { anon = crypto.randomUUID(); localStorage.setItem('nawa-anon', anon); }
+        v = localStorage.getItem('nawa-cta');
+      } catch (e) { return; }
+      if (!anon) return;
+      var body = JSON.stringify({ anon: anon, step: -1, variant: v === 'b' ? 'b' : 'a', lang: document.documentElement.lang, from: location.pathname.split('/')[2] || 'home', device: innerWidth < 760 ? 'mobile' : 'desktop' });
+      navigator.sendBeacon('/api/launch/event', new Blob([body], { type: 'application/json' }));
+    }, { threshold: 0.6 });
+    io.observe(btn);
+  })();
+</script>

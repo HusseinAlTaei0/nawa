@@ -33,7 +33,7 @@ const work = (await getWork(lang)).slice(0, 2);
         <h1 class="display" data-reveal style="--i:1" set:html={gold(c.title)} />
         <p class="lead" data-reveal style="--i:2">{c.sub}</p>
         <div class="ctas" data-reveal style="--i:3">
-          <PlanetButton href={path(lang, 'contact')} label={t.cta} />
+          <PlanetButton href={path(lang, 'launch') + '?from=hero'} label={t.cta} />
           <PlanetButton href={whatsappLink(t.waDefault)} label={t.whatsapp} variant="ghost" external />
         </div>
       </div>

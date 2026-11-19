@@ -1,0 +1,38 @@
+---
+/**
+ * صفحة الخصوصية: صارت ضرورية لأن الموقع يجمع بيانات (اختبار "اكتشف ليش تخسر زبائنك" ونموذج التواصل).
+ * العراق لا يملك قانون حماية بيانات نافذاً بعد، فنطبّق ممارسات شبيهة بـ GDPR طوعاً.
+ */
+import Base from '../../layouts/Base.astro';
+import { privacyPage } from '../../data/pages';
+import { gold } from '../../i18n/ui';
+import { LANGS, site, whatsappLink, type Lang } from '../../config/site';
+
+export function getStaticPaths() { return LANGS.map((lang) => ({ params: { lang } })); }
+const lang = Astro.params.lang as Lang;
+const c = privacyPage[lang];
+---
+<Base lang={lang} title={c.title} description={c.lead}>
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>{c.eyebrow}</p>
+      <h1 data-reveal style="--i:1" set:html={gold(c.title)} />
+      <p class="lead" data-reveal style="--i:2">{c.lead}</p>
+    </div>
+  </section>
+  <section class="section" style="padding-block-start:0">
+    <div class="wrap">
+      <div class="case-body" data-reveal>
+        {c.sections.map((s) => (
+          <>
+            <h2>{s.h}</h2>
+            {s.p.map((p) => <p>{p}</p>)}
+          </>
+        ))}
+        <h2>{c.contactH}</h2>
+        <p>{c.contactP} <a class="tlink" style="display:inline" href={`mailto:${site.email}`}><bdi dir="ltr">{site.email}</bdi></a> · <a class="tlink" style="display:inline" href={whatsappLink(c.waMsg)} target="_blank" rel="noopener noreferrer">WhatsApp</a></p>
+        <p class="muted">{c.updated} <bdi dir="ltr">2026-11-19</bdi></p>
+      </div>
+    </div>
+  </section>
+</Base>

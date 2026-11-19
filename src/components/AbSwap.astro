@@ -1,0 +1,19 @@
+---
+/**
+ * اختبار A/B لعنوان الدعوة: يختار نسخة لكل زائر (50/50) ويحفظها، ثم يبدّل النص فوراً قبل الرسم.
+ * النسخة A = اختيار صاحب نوى (موجودة في الـ HTML)، النسخة B = المنافس (في data-b).
+ * نفس المفتاح "nawa-cta" تقرأه صفحة الاختبار وتحفظه مع كل جلسة وlead، فنعرف أي عنوان جاب الزبون.
+ * يوضع مباشرة بعد العنصر المستهدف. selector يحدد العنصر، و html=true إذا كان النص فيه <em>.
+ */
+interface Props { selector: string; html?: boolean; }
+const { selector, html = false } = Astro.props;
+---
+<script is:inline define:vars={{ selector, html }}>
+  (function () {
+    var v = null;
+    try { v = localStorage.getItem('nawa-cta'); if (v !== 'a' && v !== 'b') { v = Math.random() < 0.5 ? 'a' : 'b'; localStorage.setItem('nawa-cta', v); } } catch (e) { v = 'a'; }
+    if (v !== 'b') return;
+    var els = document.querySelectorAll(selector);
+    for (var i = 0; i < els.length; i++) { var b = els[i].getAttribute('data-b'); if (b) { if (html) els[i].innerHTML = b; else els[i].textContent = b; } }
+  })();
+</script>

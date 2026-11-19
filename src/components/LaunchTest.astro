@@ -1,0 +1,214 @@
+---
+/**
+ * "اكتشف ليش تخسر زبائنك": هيكل الصفحة الثابت. المحتوى المتغير يبنيه src/scripts/launch/ui.ts.
+ *
+ * - كل مرحلة <section data-screen> واحدة ظاهرة في كل وقت
+ * - نصوص لغة الصفحة فقط تُمرَّر كـ JSON (حجم أقل، ولا نصوص داخل الـ bundle)
+ * - الكوكب (canvas) زخرفي aria-hidden؛ كل خيار زر حقيقي
+ * - بدون JavaScript: رسالة + روابط التواصل والواتساب
+ */
+import PlanetButton from './PlanetButton.astro';
+import AbSwap from './AbSwap.astro';
+import { launchCopy } from '../data/launch';
+import { services } from '../data/services';
+import { ui, path, gold } from '../i18n/ui';
+import { whatsappLink, type Lang } from '../config/site';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const c = launchCopy[lang], t = ui[lang];
+const data = {
+  ...c,
+  paths: {
+    services: Object.fromEntries(services.map((s) => [s.slug, path(lang, `services/${s.slug}`)])),
+    contact: path(lang, 'contact'),
+    launch: path(lang, 'launch'),
+  },
+};
+const r = c.report;
+---
+<section class="lt section" data-launch data-api="/api/launch" data-stage="intro">
+  <script type="application/json" id="lt-copy" set:html={JSON.stringify(data)} />
+  <div class="wrap lt-grid">
+    <div class="lt-main">
+
+      <!-- 1) المقدمة -->
+      <section class="lt-screen lt-intro" data-screen="intro">
+        <p class="eyebrow">{c.eyebrow}</p>
+        <h1 id="lt-h1" set:html={gold(c.h1.a)} data-b={gold(c.h1.b)} tabindex="-1" data-focus />
+        <AbSwap selector="#lt-h1" html />
+        <p class="lead">{c.sub}</p>
+        <p class="muted lt-note">{c.intro.note}</p>
+        <div class="ctas lt-js">
+          <PlanetButton label={c.intro.rush} class="lt-rush-btn" />
+          <PlanetButton label={c.intro.skip} variant="ghost" class="lt-skip-btn" />
+        </div>
+        <noscript>
+          <p>{c.noscript}</p>
+          <div class="ctas">
+            <PlanetButton href={path(lang, 'contact')} label={t.nav.contact} />
+            <PlanetButton href={whatsappLink(t.waDefault)} label={t.whatsapp} variant="ghost" external />
+          </div>
+        </noscript>
+      </section>
+
+      <!-- 2) التحمية: 6 ثواني -->
+      <section class="lt-screen" data-screen="rush" hidden>
+        <div class="rush-stage" tabindex="0" role="group" aria-label={c.rush.label} data-focus>
+          <div class="rush-hud" aria-hidden="true"><span class="rush-count"></span><span class="rush-time num-ltr"></span></div>
+          <div class="rush-list"></div>
+          <canvas class="rush-well" aria-hidden="true"></canvas>
+          <p class="rush-live sr-only" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <!-- 3) الأسئلة -->
+      <section class="lt-screen" data-screen="q" hidden>
+        <div class="lt-progress"><span class="lt-bar" aria-hidden="true"><i></i></span><span class="lt-step" aria-live="polite"></span></div>
+        <h2 class="lt-q" tabindex="-1" data-focus></h2>
+        <p class="lt-hint muted"></p>
+        <div class="lt-opts" role="group"></div>
+        <div class="lt-nav">
+          <button class="lt-back" type="button"></button>
+          <button class="lt-next" type="button" hidden></button>
+        </div>
+      </section>
+
+      <!-- 4) التحليل -->
+      <section class="lt-screen" data-screen="analysing" hidden>
+        <h2 tabindex="-1" data-focus>{c.analysing.title}</h2>
+        <ol class="lt-analyse" aria-live="polite">{c.analysing.steps.map((s) => <li>{s}</li>)}</ol>
+      </section>
+
+      <!-- 5) النتيجة الجزئية + البوابة -->
+      <section class="lt-screen" data-screen="reveal" hidden>
+        <p class="eyebrow">{c.reveal.eyebrow}</p>
+        <h2 class="lt-arch" tabindex="-1" data-focus></h2>
+        <p class="lt-line lead"></p>
+        <div class="lt-stats">
+          <div class="lt-score"><span class="lt-k">{c.reveal.scoreLabel}</span><span class="lt-v" dir="ltr"><b>0</b><small>/100</small></span><span class="muted lt-s">{c.reveal.scoreNote}</span></div>
+          <div class="lt-lost"><span class="lt-k">{c.reveal.lostLabel}</span><span class="lt-v"><b></b></span><span class="muted lt-s lt-note"></span></div>
+        </div>
+        <p class="lt-rushq muted" hidden></p>
+
+        <div class="lt-shared" hidden>
+          <p class="muted">{c.reveal.sharedNote}</p>
+          <PlanetButton label={c.reveal.sharedCta} class="lt-own-btn" />
+        </div>
+
+        <form class="form lt-gate" novalidate>
+          <h3>{c.gate.title}</h3>
+          <p class="lt-gate-text muted"></p>
+          <p class="hp" aria-hidden="true"><label>Website <input name="website" tabindex="-1" autocomplete="off" /></label></p>
+          <div class="lt-fields">
+            <div class="field">
+              <label for="lt-name">{c.gate.name}</label>
+              <input id="lt-name" name="name" type="text" autocomplete="name" required aria-describedby="lt-err-name" />
+              <p class="err" id="lt-err-name" role="alert"></p>
+            </div>
+            <div class="field">
+              <label for="lt-wa">{c.gate.whatsapp}</label>
+              <input id="lt-wa" name="whatsapp" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" placeholder="+964" required aria-describedby="lt-wa-hint lt-err-whatsapp" />
+              <p class="muted lt-small" id="lt-wa-hint">{c.gate.whatsappHint}</p>
+              <p class="err" id="lt-err-whatsapp" role="alert"></p>
+            </div>
+            <div class="field">
+              <label for="lt-biz">{c.gate.business}</label>
+              <input id="lt-biz" name="business" type="text" autocomplete="organization" />
+            </div>
+            <div class="field">
+              <label for="lt-city">{c.gate.city}</label>
+              <input id="lt-city" name="city" type="text" autocomplete="address-level2" />
+            </div>
+          </div>
+          <div class="lt-consent">
+            <label class="check-row"><input type="checkbox" name="consent_contact" aria-describedby="lt-err-consent_contact" /> <span>{c.gate.consentContact}</span></label>
+            <p class="err" id="lt-err-consent_contact" role="alert"></p>
+            <label class="check-row"><input type="checkbox" name="consent_marketing" /> <span>{c.gate.consentMarketing}</span></label>
+            <a class="lt-small lt-privacy" href={path(lang, 'privacy')}>{c.gate.privacy}</a>
+          </div>
+          <div class="ctas">
+            <PlanetButton label={c.gate.submit} type="submit" />
+            <button class="lt-textbtn" type="button" data-act="gate-skip">{c.gate.skip}</button>
+          </div>
+          <p class="form-status" role="status"></p>
+        </form>
+      </section>
+
+      <!-- 6) التقرير -->
+      <section class="lt-screen lt-report" data-screen="report" data-mode="full" hidden>
+        <p class="eyebrow">{r.eyebrow}</p>
+        <h2 tabindex="-1" data-focus>{r.title}</h2>
+        <p class="lt-code muted">{r.code}: <b></b></p>
+        <p class="lt-warn form-status bad" role="status" hidden></p>
+
+        <div class="lt-full">
+          <div class="lt-nums">
+            <div><span class="lt-k">{r.numbers.lost}</span><b data-n="lost"></b><span class="muted lt-small">{r.numbers.perMonth}</span></div>
+            <div><span class="lt-k">{r.numbers.recoverable}</span><b data-n="recoverable"></b><span class="muted lt-small">{r.numbers.perMonth}</span></div>
+            <div><span class="lt-k">{r.numbers.hours}</span><b data-n="hours"></b><span class="muted lt-small">{r.numbers.perMonth}</span></div>
+            <div class="gold-n"><span class="lt-k">{r.numbers.money}</span><b data-n="money"></b><span class="muted lt-small">{r.numbers.perMonth}</span></div>
+          </div>
+
+          <div class="lt-block">
+            <h3>{r.forecast.title}</h3>
+            <p class="muted">{r.forecast.text}</p>
+            <div class="lt-chart-box"></div>
+            <ul class="lt-legend"><li class="cur">{r.forecast.current}</li><li class="auto">{r.forecast.automated}</li></ul>
+            <p class="lt-gap"></p>
+            <p class="muted lt-small">{r.forecast.setup}</p>
+          </div>
+
+          <div class="lt-block">
+            <h3>{r.assumptions.title}</h3>
+            <div class="lt-assume">
+              <div class="field"><label for="lt-av">{r.assumptions.value}</label><input id="lt-av" name="a_value" type="number" inputmode="numeric" min="1000" step="1000" dir="ltr" /></div>
+              <div class="field"><label for="lt-ac">{r.assumptions.conv}</label><input id="lt-ac" name="a_conv" type="number" inputmode="numeric" min="1" max="100" step="1" dir="ltr" /></div>
+            </div>
+            <p class="muted lt-small lt-assume-note"></p>
+          </div>
+
+          <div class="lt-block">
+            <h3>{r.planTitle}</h3>
+            <ol class="lt-plan"></ol>
+          </div>
+        </div>
+
+        <div class="lt-block lt-sharpen">
+          <h3>{c.sharpen.title}</h3>
+          <p class="muted">{c.sharpen.text}</p>
+          <div class="lt-sharpen-qs"></div>
+          <p class="lt-saved lt-small" role="status"></p>
+        </div>
+
+        <div class="lt-block lt-close">
+          <h3>{c.close.title}</h3>
+          <p class="lt-close-text muted"></p>
+          <div class="ctas">
+            <a class="pbtn lt-wa" href="#" target="_blank" rel="noopener noreferrer">
+              <span class="orb" aria-hidden="true"><span class="core"></span><span class="moon"></span></span>
+              <span class="btn-label">{c.close.wa}</span>
+            </a>
+            <button class="lt-textbtn" type="button" data-act="share">{c.close.share}</button>
+            <button class="lt-textbtn" type="button" data-act="card">{c.close.download}</button>
+          </div>
+          <p class="lt-share-status lt-small" role="status"></p>
+          <a class="tlink lt-small" href={path(lang, 'contact')}>{c.close.contact} <span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+
+        <details class="lt-method">
+          <summary>{r.method.title}</summary>
+          <ul>{r.method.items.map((i) => <li>{i}</li>)}</ul>
+        </details>
+      </section>
+    </div>
+
+    <div class="lt-visual" aria-hidden="true">
+      <canvas class="lt-planet"></canvas>
+      <p class="lt-planet-label">{c.flow.planetLabel}</p>
+    </div>
+  </div>
+</section>
+
+<script>
+  import '../scripts/launch/ui.ts';
+</script>

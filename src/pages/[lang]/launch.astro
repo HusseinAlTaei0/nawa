@@ -1,0 +1,18 @@
+---
+/**
+ * صفحة "اكتشف ليش تخسر زبائنك" (Launch Test): كل أزرار الدعوة في الموقع تؤدي هنا.
+ * التحمية (6 ثواني) + 9 أسئلة تبني كوكب الزائر + نتيجة جزئية مجانية + تقرير كامل مقابل رقم الواتساب.
+ * لا يوجد Closing هنا: هذه الصفحة هي وجهة الدعوة نفسها.
+ */
+import Base from '../../layouts/Base.astro';
+import LaunchTest from '../../components/LaunchTest.astro';
+import { launchCopy } from '../../data/launch';
+import { LANGS, type Lang } from '../../config/site';
+
+export function getStaticPaths() { return LANGS.map((lang) => ({ params: { lang } })); }
+const lang = Astro.params.lang as Lang;
+const c = launchCopy[lang];
+---
+<Base lang={lang} title={c.meta.title} description={c.meta.description}>
+  <LaunchTest lang={lang} />
+</Base>
