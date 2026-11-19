@@ -100,7 +100,7 @@ node --experimental-strip-types scripts/launch-e2e.mjs
 
 ### التفعيل (مرة واحدة)
 
-1. **Supabase**: طبّق ملف الـ migration على مشروعك (SQL Editor أو `supabase db push`). يُنشئ الجداول بـ RLS مقفل، ولوحات القراءة `v_launch_funnel` و `v_launch_leads` و `v_launch_answers`.
+1. **Supabase** (مطبّق على مشروع NAWA الحالي `rrrszzriwtodxmatnets` بجانب جداول الـ CRM، بجداول منفصلة تبدأ بـ `launch_`): لأي مشروع جديد طبّق ملف الـ migration (SQL Editor أو `supabase db push`). يُنشئ الجداول بـ RLS مقفل، ولوحات القراءة `v_launch_funnel` و `v_launch_leads` و `v_launch_answers`.
 2. **Telegram**: أنشئ بوت عبر @BotFather وخذ التوكن، أرسل له أي رسالة، ثم خذ `chat.id` من `https://api.telegram.org/bot<TOKEN>/getUpdates`.
 3. **Resend**: أنشئ مفتاح API. للإرسال من `@nawa-iq.com` وثّق الدومين في Resend، وإلا يُرسل من `onboarding@resend.dev` (لبريدك فقط).
 4. **Netlify → Site configuration → Environment variables** (Functions scope):
@@ -108,8 +108,9 @@ node --experimental-strip-types scripts/launch-e2e.mjs
 | المتغير | القيمة |
 |---|---|
 | `SUPABASE_URL` | `https://<project>.supabase.co` |
-| `SUPABASE_SERVICE_ROLE_KEY` | مفتاح service_role (سري: لا يوضع في الكود أبداً) |
-| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | من الخطوة 2 |
+| `SUPABASE_SERVICE_ROLE_KEY` | مفتاح السيرفر من Supabase → Project Settings → API Keys: الجديد `sb_secret_…` أو القديم `service_role` (سري: لا يوضع في الكود أبداً) |
+| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | من الخطوة 2 (معرّف مجموعة يبدأ بـ `-100`) |
+| `TELEGRAM_FALLBACK_CHAT_ID` | اختياري: حساب شخصي يستلم التنبيه إذا فشل الإرسال للمجموعة |
 | `RESEND_API_KEY` / `LEAD_EMAIL_TO` | من الخطوة 3، وأكثر من بريد بفاصلة |
 | `LEAD_EMAIL_FROM` | اختياري، مثل `NAWA Leads <leads@nawa-iq.com>` |
 | `LAUNCH_SALT` | أي نص عشوائي طويل (لتشفير عناوين IP) |
