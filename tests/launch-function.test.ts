@@ -7,6 +7,7 @@ import handler, { normalizePhone } from '../netlify/functions/launch.mts';
 
 type Call = { url: string; method: string; body: any; headers: Record<string, string> };
 let calls: Call[] = [];
+let failChats: string[] = [];
 let sessionsInHour = 0;
 const realFetch = globalThis.fetch;
 
@@ -24,6 +25,7 @@ function mockFetch(opts: { failDb?: boolean } = {}) {
       if (method === 'POST') return Response.json([{}]);
       return new Response(null, { status: 204 });
     }
+    if (url.includes('api.telegram.org') && failChats.includes(String(body?.chat_id))) return Response.json({ ok: false }, { status: 403 });
     if (url.includes('api.telegram.org') || url.includes('api.resend.com')) return Response.json({ ok: true });
     return new Response('unexpected', { status: 599 });
   }) as typeof fetch;
@@ -41,7 +43,7 @@ const req = (action: string, body: unknown, headers: Record<string, string> = {}
 const ctx = (action: string) => ({ params: { action }, ip: '1.2.3.4' });
 
 beforeEach(() => {
-  calls = []; sessionsInHour = 0;
+  calls = []; sessionsInHour = 0; failChats = [];
   for (const k of Object.keys(env)) process.env[k] = (env as Record<string, string>)[k];
   mockFetch();
 });
@@ -137,4 +139,31 @@ test('without any env: lead still answers 200 (alerts skipped, nothing thrown)',
   const res = await handler(req('lead', leadBody()), ctx('lead'));
   assert.equal(res.status, 200);
   assert.equal(calls.length, 0);
+});
+
+test('supabase keys: legacy JWT goes in both headers, new sb_secret_ only in apikey', async () => {
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'sb_secret_abc';
+  await handler(req('event', { anon: '22222222-2222-4222-8222-222222222222', step: 1 }), ctx('event'));
+  let h = calls.find((c) => c.url.includes('supabase.test'))!.headers;
+  assert.equal(h.apikey, 'sb_secret_abc');
+  assert.equal(h.Authorization, undefined);
+  calls = [];
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOi.jwt.sig';
+  await handler(req('event', { anon: '22222222-2222-4222-8222-222222222222', step: 1 }), ctx('event'));
+  h = calls.find((c) => c.url.includes('supabase.test'))!.headers;
+  assert.equal(h.Authorization, 'Bearer eyJhbGciOi.jwt.sig');
+});
+
+test('telegram: falls back to the personal chat when the group fails', async () => {
+  process.env.TELEGRAM_CHAT_ID = '-100123';
+  process.env.TELEGRAM_FALLBACK_CHAT_ID = '777';
+  failChats = ['-100123'];
+  const res = await handler(req('lead', leadBody()), ctx('lead'));
+  assert.equal(res.status, 200);
+  const tg = calls.filter((c) => c.url.includes('telegram'));
+  assert.equal(tg.length, 2);
+  assert.equal(tg[1].body.chat_id, '777');
+  assert.ok(tg[1].body.text.includes('Group delivery failed'));
+  const flags = calls.find((c) => c.method === 'PATCH' && c.url.includes('launch_leads'))!;
+  assert.equal(flags.body.alerted_telegram, true);
 });

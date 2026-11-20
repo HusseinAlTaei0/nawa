@@ -15,8 +15,9 @@
  *   - كل نص من الزائر يُهرَّب (escape) قبل وضعه في رسالة Telegram أو البريد
  *
  * متغيرات البيئة (Netlify → Site configuration → Environment variables):
- *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY        (مطلوبة للحفظ)
- *   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID           (تنبيه فوري)
+ *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY        (مطلوبة للحفظ؛ المفتاح service_role القديم أو sb_secret_ الجديد)
+ *   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID           (تنبيه فوري للمجموعة)
+ *   TELEGRAM_FALLBACK_CHAT_ID                      (اختياري: حساب شخصي إذا فشل الإرسال للمجموعة)
  *   RESEND_API_KEY, LEAD_EMAIL_TO, LEAD_EMAIL_FROM (تنبيه بالبريد؛ FROM اختياري)
  *   LAUNCH_SALT                                    (ملح لتشفير IP؛ أي نص عشوائي طويل)
  * أي متغير ناقص: الخدمة تكمل بدونه وتكتب تحذيراً في السجل (الـ lead لا يضيع).
@@ -74,7 +75,8 @@ const db = {
     const res = await fetch(`${env('SUPABASE_URL').replace(/\/$/, '')}/rest/v1/${path}`, {
       ...init,
       headers: {
-        apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json',
+        // مفاتيح Supabase الجديدة (sb_secret_…) ليست JWT: تُرسل في apikey فقط. المفاتيح القديمة (JWT) تُرسل في الاثنين
+        apikey: key, ...(key.startsWith('eyJ') ? { Authorization: `Bearer ${key}` } : {}), 'Content-Type': 'application/json',
         ...(init.prefer ? { Prefer: init.prefer } : {}),
       },
       signal: AbortSignal.timeout(6000),
@@ -177,9 +179,7 @@ function alertText(lead: LeadInfo, s: SessionInfo, a: Answers, r: ReturnType<typ
   return lines.join('\n');
 }
 
-async function telegram(text: string, waNumber?: string, waText?: string): Promise<boolean> {
-  const token = env('TELEGRAM_BOT_TOKEN'), chat = env('TELEGRAM_CHAT_ID');
-  if (!token || !chat) { console.warn('[launch] Telegram not configured'); return false; }
+async function sendTelegram(token: string, chat: string, text: string, waNumber?: string, waText?: string): Promise<boolean> {
   try {
     const body: Record<string, unknown> = { chat_id: chat, text, parse_mode: 'HTML', disable_web_page_preview: true };
     if (waNumber) body.reply_markup = { inline_keyboard: [[{ text: 'Reply on WhatsApp', url: `https://wa.me/${waNumber}${waText ? `?text=${encodeURIComponent(waText)}` : ''}` }]] };
@@ -189,6 +189,18 @@ async function telegram(text: string, waNumber?: string, waText?: string): Promi
     if (!res.ok) console.error('[launch] Telegram', res.status, (await res.text()).slice(0, 200));
     return res.ok;
   } catch (e) { console.error('[launch] Telegram failed', e); return false; }
+}
+
+/**
+ * تنبيه Telegram: للمجموعة (TELEGRAM_CHAT_ID) أولاً، وإذا فشل (البوت طُرد من المجموعة، صلاحيات...)
+ * نحاول مرة واحدة على الحساب الشخصي (TELEGRAM_FALLBACK_CHAT_ID) حتى لا يضيع أي lead.
+ */
+async function telegram(text: string, waNumber?: string, waText?: string): Promise<boolean> {
+  const token = env('TELEGRAM_BOT_TOKEN'), chat = env('TELEGRAM_CHAT_ID'), fallback = env('TELEGRAM_FALLBACK_CHAT_ID');
+  if (!token || !(chat || fallback)) { console.warn('[launch] Telegram not configured'); return false; }
+  if (chat && (await sendTelegram(token, chat, text, waNumber, waText))) return true;
+  if (fallback && fallback !== chat) return sendTelegram(token, fallback, `${text}\n\n(Group delivery failed: sent here instead)`, waNumber, waText);
+  return false;
 }
 
 async function email(subject: string, html: string, text: string): Promise<boolean> {

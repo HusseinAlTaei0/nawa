@@ -42,7 +42,8 @@ export const home = {
         { q: 'What happens after launch?', a: 'We stay on to monitor, fix and improve the system under a support agreement, for as long as you want.' },
       ],
     },
-    closing: { title: 'Tell us what slows your team *down.*', text: 'One conversation is enough to know whether we can help.' },
+    // يقود لزر الدعوة "Discover why you are losing customers" (اختبار /launch)
+    closing: { title: 'Every week, some customers *slip away.*', text: 'Nine quick answers show where, why, and the first step to keep them. 60 seconds, free.' },
   },
   ar: {
     eyebrow: 'وكالة ذكاء اصطناعي · بغداد',
@@ -79,7 +80,7 @@ export const home = {
         { q: 'ماذا بعد الإطلاق؟', a: 'نبقى معك للمراقبة والإصلاح والتطوير ضمن اتفاق دعم، للمدة التي تريدها.' },
       ],
     },
-    closing: { title: 'أخبرنا ما الذي *يؤخّر فريقك*', text: 'محادثة واحدة تكفي لنعرف إن كنا نستطيع المساعدة.' },
+    closing: { title: 'كل أسبوع، زبائن *يفلتون منك*', text: 'تسع إجابات سريعة تُظهر أين ولماذا، وأول خطوة للحفاظ عليهم. 60 ثانية، مجاناً.' },
   },
 } as const;
 
