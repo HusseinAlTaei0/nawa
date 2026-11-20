@@ -22,9 +22,15 @@
  *   LAUNCH_SALT                                    (ملح لتشفير IP؛ أي نص عشوائي طويل)
  * أي متغير ناقص: الخدمة تكمل بدونه وتكتب تحذيراً في السجل (الـ lead لا يضيع).
  */
+import dns from 'node:dns';
+import https from 'node:https';
 import {
   compute, leadScore, sanitize, isComplete, SHARPEN, type Answers,
 } from '../../src/scripts/launch/engine.ts';
+
+// بيئة Netlify (AWS Lambda) بدون IPv6 للخارج: fetch قد يحاول IPv6 أولاً ويعلق حتى المهلة (هذا ما أوقف تنبيهات Telegram في أول اختبار حي).
+// نطلب عناوين IPv4 أولاً لكل الطلبات، ونرسل Telegram عبر https مع family: 4 صراحةً.
+dns.setDefaultResultOrder('ipv4first');
 
 interface Ctx { ip?: string; params?: Record<string, string>; waitUntil?: (p: Promise<unknown>) => void }
 
@@ -179,16 +185,41 @@ function alertText(lead: LeadInfo, s: SessionInfo, a: Answers, r: ReturnType<typ
   return lines.join('\n');
 }
 
-async function sendTelegram(token: string, chat: string, text: string, waNumber?: string, waText?: string): Promise<boolean> {
-  try {
-    const body: Record<string, unknown> = { chat_id: chat, text, parse_mode: 'HTML', disable_web_page_preview: true };
-    if (waNumber) body.reply_markup = { inline_keyboard: [[{ text: 'Reply on WhatsApp', url: `https://wa.me/${waNumber}${waText ? `?text=${encodeURIComponent(waText)}` : ''}` }]] };
-    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(5000),
+/** طلب POST بـ JSON عبر IPv4 فقط، مع مهلة. قابل للاستبدال في الاختبارات (transport.postJson) */
+function postJsonIPv4(url: string, payload: unknown, timeoutMs: number): Promise<{ status: number; json: Record<string, unknown> | null }> {
+  return new Promise((resolve, reject) => {
+    const data = JSON.stringify(payload);
+    const req = https.request(url, {
+      method: 'POST', family: 4, timeout: timeoutMs,
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) },
+    }, (res) => {
+      let raw = '';
+      res.setEncoding('utf8');
+      res.on('data', (c) => { raw += c; });
+      res.on('end', () => { let json = null; try { json = JSON.parse(raw); } catch { /* رد غير JSON */ } resolve({ status: res.statusCode ?? 0, json }); });
     });
-    if (!res.ok) console.error('[launch] Telegram', res.status, (await res.text()).slice(0, 200));
-    return res.ok;
-  } catch (e) { console.error('[launch] Telegram failed', e); return false; }
+    req.on('timeout', () => req.destroy(new Error(`timeout after ${timeoutMs}ms`)));
+    req.on('error', reject);
+    req.end(data);
+  });
+}
+export const transport = { postJson: postJsonIPv4 };
+
+async function sendTelegram(token: string, chat: string, text: string, waNumber?: string, waText?: string): Promise<boolean> {
+  const body: Record<string, unknown> = { chat_id: chat, text, parse_mode: 'HTML', disable_web_page_preview: true };
+  if (waNumber) body.reply_markup = { inline_keyboard: [[{ text: 'Reply on WhatsApp', url: `https://wa.me/${waNumber}${waText ? `?text=${encodeURIComponent(waText)}` : ''}` }]] };
+  // محاولتان: مشاكل الشبكة العابرة تُعاد مرة واحدة؛ رد خطأ من Telegram نفسه (توكن، صلاحيات) لا يُعاد
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const res = await transport.postJson(`https://api.telegram.org/bot${token}/sendMessage`, body, 10_000);
+      if (res.status === 200 && res.json?.ok) return true;
+      console.error('[launch] Telegram refused', chat, res.status, String(res.json?.description ?? '').slice(0, 200));
+      return false;
+    } catch (e) {
+      console.error(`[launch] Telegram network error (attempt ${attempt})`, chat, e instanceof Error ? e.message : e);
+    }
+  }
+  return false;
 }
 
 /**

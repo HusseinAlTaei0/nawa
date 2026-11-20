@@ -3,13 +3,20 @@
  */
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import handler, { normalizePhone } from '../netlify/functions/launch.mts';
+import handler, { normalizePhone, transport } from '../netlify/functions/launch.mts';
 
 type Call = { url: string; method: string; body: any; headers: Record<string, string> };
 let calls: Call[] = [];
 let failChats: string[] = [];
 let sessionsInHour = 0;
 const realFetch = globalThis.fetch;
+
+// Telegram يمر عبر transport.postJson (IPv4) وليس fetch: نحاكيه هنا ونسجّل الطلب بنفس شكل calls
+transport.postJson = async (url: string, body: any) => {
+  calls.push({ url, method: 'POST', body, headers: {} });
+  if (failChats.includes(String(body?.chat_id))) return { status: 403, json: { ok: false, description: 'Forbidden' } };
+  return { status: 200, json: { ok: true } };
+};
 
 function mockFetch(opts: { failDb?: boolean } = {}) {
   globalThis.fetch = (async (input: any, init: any = {}) => {
@@ -164,6 +171,25 @@ test('telegram: falls back to the personal chat when the group fails', async () 
   assert.equal(tg.length, 2);
   assert.equal(tg[1].body.chat_id, '777');
   assert.ok(tg[1].body.text.includes('Group delivery failed'));
+  const flags = calls.find((c) => c.method === 'PATCH' && c.url.includes('launch_leads'))!;
+  assert.equal(flags.body.alerted_telegram, true);
+});
+
+test('telegram: a network error is retried once before giving up on that chat', async () => {
+  let n = 0;
+  const saved = transport.postJson;
+  transport.postJson = async (url: string, body: any) => {
+    calls.push({ url, method: 'POST', body, headers: {} });
+    if (++n === 1) throw new Error('timeout after 10000ms');
+    return { status: 200, json: { ok: true } };
+  };
+  process.env.TELEGRAM_CHAT_ID = '-100123';
+  const res = await handler(req('lead', leadBody()), ctx('lead'));
+  transport.postJson = saved;
+  assert.equal(res.status, 200);
+  const tg = calls.filter((c) => c.url.includes('telegram'));
+  assert.equal(tg.length, 2, 'same chat retried once');
+  assert.equal(tg[1].body.chat_id, '-100123');
   const flags = calls.find((c) => c.method === 'PATCH' && c.url.includes('launch_leads'))!;
   assert.equal(flags.body.alerted_telegram, true);
 });
