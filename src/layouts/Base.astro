@@ -18,6 +18,13 @@ import Footer from '../components/Footer.astro';
 import { HEX, DISC } from '../lib/mark';
 import { ui, dirOf, otherLang, switchLangPath, plain } from '../i18n/ui';
 import { site, type Lang } from '../config/site';
+import { DIVISION_ID } from '../data/division';
+import { DIVISION as ENGINE_DIVISION } from '../scripts/launch/engine';
+
+// حارس الفروع: النصوص والمحرك والإعدادات يجب أن تكون للفرع نفسه، وإلا يتوقف البناء برسالة واضحة
+if (site.division !== DIVISION_ID || site.division !== ENGINE_DIVISION) {
+  throw new Error(`[division] site.division='${site.division}' but src/data/division.ts='${DIVISION_ID}' and engine.ts='${ENGINE_DIVISION}'. See src/data/divisions/README.md`);
+}
 
 interface Props { lang: Lang; title?: string; description?: string; noindex?: boolean; }
 const { lang, title, description, noindex = false } = Astro.props;

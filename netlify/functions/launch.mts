@@ -1,5 +1,6 @@
 /**
- * Netlify Function: الخادم الوحيد لاختبار "اكتشف ليش تخسر زبائنك".
+ * Netlify Function: الخادم الوحيد للتشخيص (/launch) للفرع الفعّال (اليوم: "اكتشف وين يضيع شغلك القانوني").
+ * لا يعرف أسماء الأسئلة: كل ما يخص الفرع (الأسئلة، الحساب، نص التنبيه) يأتي من engine.ts.
  * يعمل على نفس الدومين (/api/launch/*)، لذلك سياسة CSP (connect-src 'self') لا تتغير.
  *
  * المسارات (كلها POST + JSON):
@@ -23,7 +24,7 @@
  * أي متغير ناقص: الخدمة تكمل بدونه وتكتب تحذيراً في السجل (الـ lead لا يضيع).
  */
 import {
-  compute, leadScore, sanitize, isComplete, SHARPEN, type Answers,
+  compute, leadScore, sanitize, isComplete, alertLines, sharpenLine, SHARPEN, DB_COLUMNS, DIVISION, type Answers,
 } from '../../src/scripts/launch/engine.ts';
 
 interface Ctx { ip?: string; params?: Record<string, string>; waitUntil?: (p: Promise<unknown>) => void }
@@ -122,9 +123,9 @@ function sessionRow(b: Record<string, unknown>, ipHash: string) {
       code: /^NW-[A-Z0-9]{5}$/.test(String(b.code)) ? b.code : null,
       lang: oneOf(b.lang, ['en', 'ar'] as const),
       cta_variant: oneOf(b.variant, ['a', 'b'] as const),
-      industry: answers.industry ?? null, team: answers.team ?? null, volume: answers.volume ?? null, channels: answers.channels ?? null,
-      reply: answers.reply ?? null, vanish: answers.vanish ?? null, hours: answers.hours ?? null, system: answers.system ?? null,
-      bottleneck: answers.bottleneck ?? null, timeline: answers.timeline ?? null, decider: answers.decider ?? null, band: answers.band ?? null, worry: answers.worry ?? null,
+      // الفرع: الأجوبة كاملة في answers (jsonb)، وبعضها في أعمدة مستقلة حسب الفرع (DB_COLUMNS)
+      division: DIVISION,
+      ...Object.fromEntries(DB_COLUMNS.map((k) => [k, (answers as Record<string, unknown>)[k] ?? null])),
       answers, durations_ms: durations,
       rush_played: typeof rush.played === 'boolean' ? rush.played : null,
       rush_answered: int(rush.answered, 0, 50), rush_total: int(rush.total, 0, 50),
@@ -144,19 +145,6 @@ function sessionRow(b: Record<string, unknown>, ipHash: string) {
 /* ---------------------------------------------------------------------------
  * التنبيهات
  * ------------------------------------------------------------------------- */
-const LABEL: Record<string, string> = {
-  clinic: 'Clinic', restaurant: 'Restaurant/café', store: 'Online store', retail: 'Shop', realestate: 'Real estate', education: 'Education', services: 'Services company', other: 'Other',
-  solo: '1 (owner)', small: '2-3', mid: '4-10', large: '10+', v1: '<10/day', v2: '10-30/day', v3: '30-100/day', v4: '100+/day',
-  minutes: 'minutes', hour: 'within the hour', morning: 'next morning', late: 'whenever',
-  few: '~10%', some: '~30%', half: '~50%', most: 'most', h1: '<3h/wk', h2: '3-8h/wk', h3: '8-15h/wk', h4: '15h+/wk',
-  paper: 'paper', head: 'memory', excel: 'Excel', wabiz: 'WhatsApp labels', software: 'own software',
-  replies: 'fast replies', bookings: 'bookings', orders: 'orders', followup: 'follow-up', admin: 'admin/ERP', presence: 'online presence',
-  now: 'this month', quarter: '≤3 months', later: 'later this year', curious: 'just exploring',
-  me: 'decides alone', partner: 'with partner/family', manager: 'needs manager', committee: 'committee',
-  b1: '<150k IQD/mo', b2: '150-450k', b3: '450k-1.2M', b4: '1.2M+', robotic: 'sounds robotic', data: 'data privacy', mistakes: 'wrong answers', price: 'cost', staff: 'staff resistance',
-};
-const L = (v?: string | null) => esc(v ? LABEL[v] ?? v : '—');
-const money = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}k` : String(n));
 
 interface LeadInfo { name: string; business: string; city: string; whatsapp: string; marketing: boolean }
 interface SessionInfo { code: string | null; lang: string | null; cta_variant: string | null; source_from: string | null; utm_source: string | null; archetype: string; score: number }
@@ -167,12 +155,8 @@ function alertText(lead: LeadInfo, s: SessionInfo, a: Answers, r: ReturnType<typ
     `${esc(lead.name)}${lead.business ? ` · ${esc(lead.business)}` : ''}${lead.city ? ` · ${esc(lead.city)}` : ''}`,
     `WhatsApp: +${lead.whatsapp}`,
     '',
-    `Orbit: <b>${s.archetype}</b> ${s.score}/100 · code ${s.code ?? '—'}`,
-    `${L(a.industry)} · team ${L(a.team)} · ${L(a.volume)} · channels: ${(a.channels ?? []).join(', ') || '—'}`,
-    `Reply: ${L(a.reply)} · vanish: ${L(a.vanish)} · repetitive: ${L(a.hours)} · system: ${L(a.system)}`,
-    `Wants to fix: <b>${L(a.bottleneck)}</b>`,
-    `Lost ${r.lost[0]}–${r.lost[1]} inquiries/mo · at stake ${money(r.money[0])}–${money(r.money[1])} IQD/mo`,
-    a.timeline || a.decider || a.band ? `Timing: ${L(a.timeline)} · ${L(a.decider)} · value: ${L(a.band)} · worry: ${L(a.worry)}` : 'Sharpen answers: not yet',
+    `Orbit: <b>${esc(s.archetype)}</b> ${s.score}/100 · code ${s.code ?? '—'} · ${DIVISION}`,
+    ...alertLines(a, r).map(esc),
     '',
     `Lang ${s.lang ?? '—'} · headline ${s.cta_variant ?? '—'} · from ${esc(s.source_from ?? '—')}${s.utm_source ? ` · utm ${esc(s.utm_source)}` : ''} · marketing ${lead.marketing ? 'yes' : 'no'}`,
   ];
@@ -371,7 +355,7 @@ async function onUpdate(b: Record<string, unknown>, later: (p: Promise<unknown>)
     if (leads[0]) {
       const a = regrade.answers;
       await later(telegram(
-        `<b>Lead update · ${regrade.before} → ${regrade.after.grade}</b>\n${esc(leads[0].name)} · +${leads[0].whatsapp}\nTiming: ${L(a.timeline)} · ${L(a.decider)} · value: ${L(a.band)} · worry: ${L(a.worry)}`,
+        `<b>Lead update · ${regrade.before} → ${regrade.after.grade}</b>\n${esc(leads[0].name)} · +${leads[0].whatsapp}\n${esc(sharpenLine(a))}`,
         leads[0].whatsapp,
       ));
     }

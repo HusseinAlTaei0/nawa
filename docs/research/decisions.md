@@ -29,9 +29,12 @@ Date: 13 November 2026. Where a research report disagrees with this file, this f
 | Data | Supabase (RLS locked, written only by the Netlify Function with the service key) | Netlify Forms stays for the contact form only |
 | Lead alerts | Telegram (instant, with a reply-on-WhatsApp button) and email (Resend) | The WhatsApp Business API is not used: the visitor starts the chat with a pre-filled result code |
 | Privacy | New `/privacy` page: GDPR-style practice (consent, 12-month retention, deletion on request) | Iraq has no data protection law in force yet |
+| Rebrand (Nov 21, 2026) | NAWA becomes **NAWA Legal Tech** for law firms and in-house legal teams in Iraq. Same voice, new field. Every word rewritten, the diagnosis rebuilt ("Discover where your legal work slips": 6-second office rush + 9 questions on matters, deadlines, close calls and where files live; result in deadlines at risk per year and lawyer hours per month) | The agency site is kept as a division (`src/data/divisions/agency/`, `engines/agency.ts`, git tag `nawa-agency-v1`) for future branches (NAWA Branding, NAWA Scaling). Supabase migration `20261121000000_launch_division.sql` adds `division` |
 
 ## Open items for the owner
-- Launch diagnosis: confirm the per-industry presets in `PRESETS` (`src/scripts/launch/engine.ts`): value of a new customer in IQD and the share of inquiries that become customers.
+- Legal diagnosis: confirm `PRESETS` in `src/scripts/launch/engines/legal.ts` (value of one lawyer hour in IQD per type of practice, and the share of freed hours that goes back into legal work). Have one Iraqi lawyer read the legal copy before launch.
+- Legal diagnosis: apply `supabase/migrations/20261121000000_launch_division.sql` before deploying.
+- Launch diagnosis (agency, preserved): confirm the per-industry presets in `PRESETS` (`src/scripts/launch/engine.ts`): value of a new customer in IQD and the share of inquiries that become customers.
 - Launch diagnosis: apply the Supabase migration, create the Telegram bot and Resend key, and set the environment variables listed in the README.
 - Launch diagnosis: share the questions you ask in real discovery calls today so the 9 questions can be tuned to them.
 - Confirm the Najwa Arabic licence allows web embedding.

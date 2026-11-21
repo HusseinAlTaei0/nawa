@@ -8,6 +8,12 @@ export const site = {
   nameAr: 'نوى',
   url: 'https://nawa-iq.com',
 
+  /**
+   * الفرع الفعّال من نوى: 'legal' (NAWA Legal Tech، الحالي) أو 'agency' (الوكالة، محفوظ).
+   * يجب أن يطابق src/data/division.ts و src/scripts/launch/engine.ts (انظر src/data/divisions/README.md)
+   */
+  division: 'legal' as Division,
+
   // PLACEHOLDER: رقم واتساب الشركة بالصيغة الدولية بدون + أو أصفار (مثال: 9647701234567)
   whatsapp: '9640000000000',
   // PLACEHOLDER: رقم الهاتف كما يظهر للزائر
@@ -31,6 +37,7 @@ export const site = {
 } as const;
 
 export type Lang = 'en' | 'ar';
+export type Division = 'agency' | 'legal';
 export const LANGS: Lang[] = ['en', 'ar'];
 
 /** رابط واتساب مع رسالة جاهزة */

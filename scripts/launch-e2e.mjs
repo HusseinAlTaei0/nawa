@@ -1,5 +1,5 @@
 /**
- * اختبار شامل لمسار "اكتشف ليش تخسر زبائنك" في متصفح حقيقي (Playwright) ضد astro preview.
+ * اختبار شامل لمسار التشخيص (/launch) في متصفح حقيقي (Playwright) ضد astro preview.
  * طلبات /api/launch/* تُوجَّه للـ Netlify Function الحقيقية داخل Node (بدون Supabase: تعمل بوضع "غير مخزّن").
  *
  * الاستخدام:
@@ -65,7 +65,7 @@ const browser = await chromium.launch();
   await page.waitForTimeout(800);
   await shot(page, 'd-en-1-intro.png');
   const h1 = await page.textContent('h1');
-  if (!/losing customers|lose this week/.test(h1)) note('desktop-en', 'h1 text: ' + h1);
+  if (!/legal work slips|nearly slipped/.test(h1)) note('desktop-en', 'h1 text: ' + h1);
   await page.click('.lt-rush-btn');
   await page.waitForTimeout(1300);
   for (let k = 0; k < 3; k++) { const b = page.locator('.rbubble[data-state="wait"]').first(); if (await b.count()) { await b.click().catch(() => {}); await page.waitForTimeout(600); } }
@@ -74,7 +74,7 @@ const browser = await chromium.launch();
   await page.waitForTimeout(900);
   await shot(page, 'd-en-3-rush-summary.png');
   const sum = await page.textContent('.rush-sum');
-  if (!/You answered \d+ of 12/.test(sum)) note('desktop-en', 'rush summary: ' + sum);
+  if (!/You (answered|handled) \d+ of 12/.test(sum)) note('desktop-en', 'rush summary: ' + sum);
   const t0 = Date.now();
   await page.waitForSelector('[data-screen="q"]:not([hidden])', { timeout: 6000 });
   const rushTotal = Date.now() - t0;
@@ -164,10 +164,10 @@ const browser = await chromium.launch();
   if (await page.isVisible('.lt-gate')) note('shared', 'gate visible on shared result');
   await shot(page, 's-en-shared.png');
   const h1 = await page.textContent('h1');
-  if (!/lose this week/.test(h1)) note('shared', 'variant b h1 not applied: ' + h1);
+  if (!/lose this week|nearly slipped/.test(h1)) note('shared', 'variant b h1 not applied: ' + h1);
   await page.goto(`${BASE}/en/`, { waitUntil: 'load' });
   const lbl = await page.textContent('.closing .cta-launch .btn-label');
-  if (!/lose this week/.test(lbl)) note('home', 'closing variant b label: ' + lbl);
+  if (!/lose this week|nearly slipped/.test(lbl)) note('home', 'closing variant b label: ' + lbl);
   const href = await page.getAttribute('.closing .cta-launch', 'href');
   if (!href?.startsWith('/en/launch/')) note('home', 'closing href ' + href);
   await page.locator('.closing .cta-launch').scrollIntoViewIfNeeded();

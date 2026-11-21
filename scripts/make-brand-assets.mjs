@@ -9,6 +9,14 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
+// نص صورة المعاينة (واتساب، لينكدإن) للفرع الفعّال. فرع الوكالة (المحفوظ):
+//   en: 'We build intelligence that <em>works.</em>' · 'AI agency · Baghdad'
+//   ar: 'نبني ذكاء <em>يشتغل</em>' · 'وكالة ذكاء اصطناعي · بغداد'   (صوره في docs/divisions/agency/)
+const OG = {
+  en: { title: 'We build legal intelligence that <em>works.</em>', eyebrow: 'Legal tech · Baghdad' },
+  ar: { title: 'نبني ذكاء قانوني <em>يشتغل</em>', eyebrow: 'تقنية قانونية · بغداد' },
+};
+
 // Playwright مثبّت على الجهاز (عام) وليس ضمن اعتماديات المشروع، لذلك نحمّله بـ require
 const { chromium } = createRequire(import.meta.url)('playwright');
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -26,8 +34,8 @@ let seed = 7; const rnd = () => { seed = (seed * 1664525 + 1013904223) % 4294967
 const stars = Array.from({ length: 260 }, () => `<circle cx="${(rnd() * 1200).toFixed(1)}" cy="${(rnd() * 630).toFixed(1)}" r="${(0.5 + rnd() * 1.1).toFixed(2)}" fill="#C5A463" opacity="${(0.25 + rnd() * 0.55).toFixed(2)}"/>`).join('');
 
 const og = (lang) => `<!doctype html><html lang="${lang}" dir="${lang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><style>${fonts}
-*{margin:0;box-sizing:border-box}body{width:1200px;height:630px;background:#0a0a0a;color:#fff;position:relative;overflow:hidden}
-svg.sky{position:absolute;inset:0}.in{position:absolute;inset:0;padding:72px 80px;display:flex;flex-direction:column;justify-content:space-between}
+*{margin:0;box-sizing:border-box}html{width:1200px;height:630px;overflow:hidden;direction:ltr}body{direction:inherit;width:1200px;height:630px;background:#0a0a0a;color:#fff;position:relative;overflow:hidden}
+svg.sky{position:absolute;inset:0}.in{position:absolute;inset:0;direction:${lang === 'ar' ? 'rtl' : 'ltr'};padding:72px 80px;display:flex;flex-direction:column;justify-content:space-between}
 .brand{display:flex;align-items:center;gap:18px}.brand svg{width:44px}.wm{font:600 22px Mont;letter-spacing:.32em}
 [dir=rtl] .wm{font:400 44px Najwa;letter-spacing:0}
 h1{font:400 92px/1.04 Playfair;letter-spacing:-.02em;max-width:900px}h1 em{font-family:PlayfairI;font-style:italic;color:#C5A463}
@@ -39,8 +47,8 @@ p{font:500 20px Mont;letter-spacing:.24em;text-transform:uppercase;color:#8f8f8f
 <div class="ring" style="width:520px;height:520px;${lang === 'ar' ? 'left' : 'right'}:-150px;top:60px"></div>
 <div class="ring" style="width:720px;height:720px;${lang === 'ar' ? 'left' : 'right'}:-250px;top:-40px;opacity:.25"></div>
 <div class="in"><div class="brand">${mark(12)}<span class="wm">${lang === 'ar' ? 'نوى' : 'NAWA'}</span></div>
-<h1>${lang === 'ar' ? 'نبني ذكاء <em>يشتغل</em>' : 'We build intelligence that <em>works.</em>'}</h1>
-<p>${lang === 'ar' ? 'وكالة ذكاء اصطناعي · بغداد' : 'AI agency · Baghdad'}</p></div></body></html>`;
+<h1>${lang === 'ar' ? OG.ar.title : OG.en.title}</h1>
+<p>${lang === 'ar' ? OG.ar.eyebrow : OG.en.eyebrow}</p></div></body></html>`;
 
 const icon = (size, pad, radius) => `<!doctype html><html><body style="margin:0;width:${size}px;height:${size}px;background:#0a0a0a;border-radius:${radius}px;display:grid;place-items:center"><div style="width:${size - pad * 2}px">${mark(size <= 64 ? 16 : 9)}</div></body></html>`;
 

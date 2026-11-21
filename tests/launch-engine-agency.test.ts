@@ -1,5 +1,5 @@
 /**
- * اختبارات محرك Launch Test (بدون أي مكتبة): node --test --experimental-strip-types tests/
+ * اختبارات محرك فرع الوكالة (محفوظ، غير مفعّل) (بدون أي مكتبة): node --test --experimental-strip-types tests/
  * تتأكد أن الأرقام نطاقات منطقية، وأن الهوية والخطة والتقييم مشروطة بالأجوبة فعلاً.
  */
 import { test } from 'node:test';
@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import {
   compute, archetype, orbitScore, leadScore, encode, decode, sanitize, isComplete, nice, resultCode, plan,
   OPTIONS, CORE, type Answers,
-} from '../src/scripts/launch/engine.ts';
+} from '../src/scripts/launch/engines/agency.ts';
 
 const base: Answers = {
   industry: 'clinic', team: 'small', volume: 'v2', channels: ['whatsapp', 'instagram'],

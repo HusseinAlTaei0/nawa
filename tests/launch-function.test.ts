@@ -20,7 +20,7 @@ function mockFetch(opts: { failDb?: boolean } = {}) {
       if (opts.failDb) return new Response('boom', { status: 500 });
       if (method === 'HEAD') return new Response(null, { status: 200, headers: { 'content-range': `0-0/${sessionsInHour}` } });
       if (url.includes('/launch_sessions') && method === 'POST') return Response.json([{ id: '11111111-1111-4111-8111-111111111111' }]);
-      if (url.includes('/launch_sessions') && method === 'GET') return Response.json([{ id: '11111111-1111-4111-8111-111111111111', answers: { industry: 'clinic' }, grade: 'C' }]);
+      if (url.includes('/launch_sessions') && method === 'GET') return Response.json([{ id: '11111111-1111-4111-8111-111111111111', answers: { practice: 'litigation' }, grade: 'C' }]);
       if (url.includes('/launch_leads') && method === 'GET') return Response.json([{ name: 'Ali', whatsapp: '9647701234567' }]);
       if (method === 'POST') return Response.json([{}]);
       return new Response(null, { status: 204 });
@@ -32,10 +32,10 @@ function mockFetch(opts: { failDb?: boolean } = {}) {
 }
 
 const env = { SUPABASE_URL: 'https://supabase.test', SUPABASE_SERVICE_ROLE_KEY: 'srk', TELEGRAM_BOT_TOKEN: 'tg', TELEGRAM_CHAT_ID: '1', RESEND_API_KEY: 're', LEAD_EMAIL_TO: 'a@b.c' };
-const answers = { industry: 'clinic', team: 'small', volume: 'v3', channels: ['whatsapp'], reply: 'morning', vanish: 'half', hours: 'h3', system: 'paper', bottleneck: 'replies' };
+const answers = { practice: 'litigation', team: 'small', volume: 'm3', channels: ['whatsapp'], deadlines: 'notebook', misses: 'few', hours: 'h3', storage: 'paper', bottleneck: 'deadlines' };
 const leadBody = (extra: Record<string, unknown> = {}) => ({
   anon: '22222222-2222-4222-8222-222222222222', variant: 'a', lang: 'ar', code: 'NW-ABCDE', answers, ms: 60000,
-  contact: { name: 'Ali <b>', business: 'Clinic', city: 'Baghdad', whatsapp: '0770 123 4567' }, consent: { contact: true, marketing: false }, hp: '',
+  contact: { name: 'Ali <b>', business: 'Law office', city: 'Baghdad', whatsapp: '0770 123 4567' }, consent: { contact: true, marketing: false }, hp: '',
   ...extra,
 });
 const req = (action: string, body: unknown, headers: Record<string, string> = {}) =>
@@ -65,6 +65,9 @@ test('lead: saves session + lead, alerts Telegram and email, escapes user text',
   const sess = calls.find((c) => c.url.endsWith('/launch_sessions') && c.method === 'POST')!;
   assert.equal(sess.body.grade !== undefined, true);
   assert.equal(sess.body.archetype, 'crowded');
+  assert.equal(sess.body.division, 'legal', 'division stored with every session');
+  assert.equal(sess.body.answers.deadlines, 'notebook', 'full answers kept in jsonb');
+  assert.equal(sess.body.deadlines, undefined, 'only existing columns are written');
   assert.ok(/^[0-9a-f]{64}$/.test(sess.body.token_hash), 'token stored only as hash');
   assert.equal(sess.body.ip_hash.length, 32);
   assert.ok(!JSON.stringify(sess.body).includes('1.2.3.4'), 'raw IP never stored');
@@ -87,7 +90,7 @@ test('lead: honeypot and too-fast submissions are silently dropped', async () =>
 test('lead: validation errors', async () => {
   assert.equal((await handler(req('lead', leadBody({ consent: { contact: false } })), ctx('lead'))).status, 400);
   assert.equal((await handler(req('lead', leadBody({ contact: { name: 'A', whatsapp: '0770' } })), ctx('lead'))).status, 400);
-  assert.equal((await handler(req('lead', leadBody({ answers: { industry: 'clinic' } })), ctx('lead'))).status, 400);
+  assert.equal((await handler(req('lead', leadBody({ answers: { practice: 'litigation' } })), ctx('lead'))).status, 400);
 });
 
 test('lead: database down still sends alerts', async () => {
