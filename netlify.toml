@@ -29,6 +29,38 @@
   status = 302
   force = true
 
+# روابط خدمات فرع الوكالة القديمة (قبل التحول إلى NAWA Legal Tech، نوفمبر 2026) تذهب لصفحة الخدمات.
+# 302 (مؤقت) عمداً: هذه العناوين قد تعود لاحقاً لفرع آخر من نوى (NAWA Branding، NAWA Scaling).
+[[redirects]]
+  from = "/:lang/services/ai-agents/*"
+  to = "/:lang/services/"
+  status = 302
+
+[[redirects]]
+  from = "/:lang/services/automation/*"
+  to = "/:lang/services/"
+  status = 302
+
+[[redirects]]
+  from = "/:lang/services/websites-web-apps/*"
+  to = "/:lang/services/"
+  status = 302
+
+[[redirects]]
+  from = "/:lang/services/erp-systems/*"
+  to = "/:lang/services/"
+  status = 302
+
+[[redirects]]
+  from = "/:lang/services/saas-products/*"
+  to = "/:lang/services/"
+  status = 302
+
+[[redirects]]
+  from = "/:lang/services/branding/*"
+  to = "/:lang/services/"
+  status = 302
+
 # رؤوس أمان لكل الصفحات
 [[headers]]
   for = "/*"

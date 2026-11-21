@@ -1,5 +1,6 @@
 /**
- * واجهة "اكتشف ليش تخسر زبائنك": تتحكم بالمراحل كلها.
+ * واجهة التشخيص (/launch): تتحكم بالمراحل كلها. مشتركة بين الفروع: لا تعرف أسماء الأسئلة،
+ * وكل ما يخص الفرع (الأسئلة، الكوكب، الحساب) يأتي من engine.ts والنصوص من src/data/launch.ts.
  *
  * المراحل: intro → (rush اختياري) → 9 أسئلة → analysing → reveal (نتيجة جزئية + بوابة الواتساب) → report
  * - كل النصوص تأتي من JSON داخل الصفحة (لغة الصفحة فقط) حتى يبقى حجم JavaScript صغيراً
@@ -8,7 +9,8 @@
  * - الوصول: كل خيار زر حقيقي، التركيز ينتقل لعنوان كل مرحلة، الإعلانات عبر aria-live
  */
 import {
-  OPTIONS, CORE, SHARPEN, compute, decode, encode, isComplete, resultCode, defaultAssumptions,
+  OPTIONS, CORE, SHARPEN, MULTI, FOCUS, LEAD_KEY, SHORT_KEYS, SERVICE_TO_FOCUS,
+  compute, decode, encode, isComplete, resultCode, defaultAssumptions, planetShape,
   type Answers, type Key, type Result, type Range,
 } from './engine';
 import { createPlanet, type PlanetParams } from './planet';
@@ -68,10 +70,10 @@ function init(root: HTMLElement) {
     device: matchMedia('(pointer: coarse)').matches || innerWidth < 760 ? 'mobile' : 'desktop',
   };
   // قادم من صفحة خدمة: نحدد مسبقاً جواب "شنو تريد تصلح" (الزائر يؤكده بنفسه)
-  const SERVICE_TO_BOTTLENECK: Record<string, Answers['bottleneck']> = {
-    'ai-agents': 'replies', automation: 'followup', 'websites-web-apps': 'presence', 'erp-systems': 'admin', 'saas-products': 'orders', branding: 'presence',
-  };
-  const preBottleneck = SERVICE_TO_BOTTLENECK[params.get('service') || ''];
+  const preFocus: string | undefined = SERVICE_TO_FOCUS[params.get('service') || ''];
+  /** الأجوبة كقاموس عام (الواجهة لا تعرف أسماء الأسئلة) */
+  const bag = answers as Record<string, string | string[] | undefined>;
+  const multiList = () => (bag[MULTI] as string[] | undefined) ?? [];
 
   /* ----- القياس ----- */
   const post = async (path: string, body: unknown) => {
@@ -101,18 +103,7 @@ function init(root: HTMLElement) {
   }
 
   /* ----- الكوكب من الأجوبة ----- */
-  const planetFrom = (a: Answers): Partial<PlanetParams> => {
-    const answered = CORE.filter((k) => (k === 'channels' ? a.channels?.length : a[k])).length;
-    return {
-      form: Math.max(0.04, answered / CORE.length),
-      density: a.volume ? { v1: 0.35, v2: 0.55, v3: 0.8, v4: 1 }[a.volume] : 0.45,
-      moons: a.channels?.length ?? 0,
-      ring: a.team ? { solo: 0, small: 0.4, mid: 0.7, large: 1 }[a.team] : 0,
-      glow: a.reply ? { minutes: 1, hour: 0.7, morning: 0.35, late: 0.12 }[a.reply] : 0.4,
-      leak: a.vanish ? { few: 0.1, some: 0.35, half: 0.65, most: 1 }[a.vanish] : 0,
-      order: a.system ? { paper: 0.1, head: 0, excel: 0.55, wabiz: 0.6, software: 1 }[a.system] : 0.6,
-    };
-  };
+  const planetFrom = (a: Answers): Partial<PlanetParams> => planetShape(a);
   planet.set(planetFrom(answers));
 
   /* ----- العنوان: نسخة A/B (السكربت المضمّن بدّلها قبل الرسم؛ هنا فقط نتأكد) ----- */
@@ -143,7 +134,7 @@ function init(root: HTMLElement) {
   }
 
   function renderQ() {
-    const key = CORE[qi] as Key, q = copy.questions[key], multi = key === 'channels';
+    const key = CORE[qi] as Key, q = copy.questions[key], multi = key === MULTI;
     qStart = performance.now();
     qStep.textContent = fill(copy.flow.progress, { i: qi + 1, n: CORE.length });
     // شريط سريع ثم بطيء، ويبدأ بتقدّم ممنوح (12%) لأن الزائر بدأ فعلاً
@@ -154,31 +145,31 @@ function init(root: HTMLElement) {
     qHint.hidden = !qHint.textContent;
     qOpts.replaceChildren();
     qOpts.setAttribute('aria-label', q.title);
-    if (key === 'bottleneck' && !answers.bottleneck && preBottleneck) answers.bottleneck = preBottleneck;
+    if (key === FOCUS && !bag[FOCUS] && preFocus) bag[FOCUS] = preFocus;
     for (const opt of OPTIONS[key] as readonly string[]) {
       const b = el('button', 'lt-opt'); b.type = 'button';
       b.textContent = (q.options as Record<string, string>)[opt];
-      const cur = answers[key as keyof Answers];
-      const on = multi ? (answers.channels as string[] | undefined)?.includes(opt) : cur === opt;
+      const on = multi ? multiList().includes(opt) : bag[key] === opt;
       b.setAttribute('aria-pressed', String(!!on));
       b.addEventListener('click', () => choose(key, opt, b));
       qOpts.append(b);
     }
     qNext.hidden = !multi;
-    qNext.disabled = multi && !answers.channels?.length;
+    qNext.disabled = multi && !multiList().length;
   }
 
   function choose(key: Key, opt: string, b: HTMLButtonElement) {
-    if (key === 'channels') {
-      const set = new Set(answers.channels ?? []);
-      set.has(opt as never) ? set.delete(opt as never) : set.add(opt as never);
-      answers.channels = OPTIONS.channels.filter((c) => set.has(c));
-      b.setAttribute('aria-pressed', String(set.has(opt as never)));
-      qNext.disabled = !answers.channels.length;
+    if (key === MULTI) {
+      const set = new Set(multiList());
+      set.has(opt) ? set.delete(opt) : set.add(opt);
+      // نحفظ الترتيب كما في قائمة الخيارات (يهم للرابط المختصر)
+      bag[MULTI] = (OPTIONS[MULTI] as readonly string[]).filter((c) => set.has(c));
+      b.setAttribute('aria-pressed', String(set.has(opt)));
+      qNext.disabled = !multiList().length;
       planet.set(planetFrom(answers));
       return;
     }
-    (answers as Record<string, string>)[key] = opt;
+    bag[key] = opt;
     for (const x of qOpts.querySelectorAll('button')) x.setAttribute('aria-pressed', String(x === b));
     planet.set(planetFrom(answers));
     setTimeout(advance, motionOn() ? 260 : 0);
@@ -217,16 +208,11 @@ function init(root: HTMLElement) {
   });
 
   /* ----- كشف النتيجة الجزئية ----- */
-  const vars = (a: Answers) => ({
-    industry: a.industry ? copy.short.industry[a.industry] : '',
-    volume: a.volume ? copy.short.volume[a.volume] : '',
-    reply: a.reply ? copy.short.reply[a.reply] : '',
-    vanish: a.vanish ? copy.short.vanish[a.vanish] : '',
-    hours: a.hours ? copy.short.hours[a.hours] : '',
-    system: a.system ? copy.short.system[a.system] : '',
-    bottleneck: a.bottleneck ? copy.short.bottleneck[a.bottleneck] : '',
-    team: a.team ? copy.short.team[a.team] : '',
-  });
+  /** الصيغ القصيرة لكل جواب، تُدرج داخل الجمل: {practice} {volume} ... */
+  const vars = (a: Answers): Record<string, string> => {
+    const shorts = copy.short as Record<string, Record<string, string>>, ab = a as Record<string, unknown>;
+    return Object.fromEntries(SHORT_KEYS.map((k) => [k, typeof ab[k] === 'string' ? shorts[k]?.[ab[k] as string] ?? '' : '']));
+  };
   const cap = (s: string) => (rtl ? s : s.charAt(0).toUpperCase() + s.slice(1));
 
   function rangeInto(target: HTMLElement, r: Range, money = false) {
@@ -408,9 +394,9 @@ function init(root: HTMLElement) {
       const row = el('div', 'chips');
       for (const opt of OPTIONS[key] as readonly string[]) {
         const b = el('button', 'lt-chip', (q.options as Record<string, string>)[opt]); b.type = 'button';
-        b.setAttribute('aria-pressed', String(answers[key] === opt));
+        b.setAttribute('aria-pressed', String(bag[key] === opt));
         b.addEventListener('click', () => {
-          (answers as Record<string, string>)[key] = opt;
+          bag[key] = opt;
           for (const x of row.querySelectorAll('button')) x.setAttribute('aria-pressed', String(x === b));
           saveSharpen();
         });
@@ -424,7 +410,7 @@ function init(root: HTMLElement) {
     clearTimeout(sharpenTimer);
     sharpenTimer = window.setTimeout(async () => {
       const s = $(rep, '.lt-saved'); s.textContent = '';
-      const sharpen = Object.fromEntries(SHARPEN.filter((k) => answers[k]).map((k) => [k, answers[k]]));
+      const sharpen = Object.fromEntries(SHARPEN.filter((k) => bag[k]).map((k) => [k, bag[k]]));
       track(14);
       try {
         if (session) await post('update', { ...session, sharpen });
@@ -439,7 +425,8 @@ function init(root: HTMLElement) {
     const v = vars(answers);
     const msg = fill(copy.close.waMessage, {
       code, archetype: copy.archetypes[result.archetype].name, score: result.score,
-      industry: answers.industry ? copy.questions.industry.options[answers.industry] : '',
+      // نوع الزائر بصيغته الكاملة (مثل "Litigation firm"): المفتاح في القالب هو اسم السؤال نفسه
+      [LEAD_KEY]: typeof bag[LEAD_KEY] === 'string' ? (copy.questions[LEAD_KEY].options as Record<string, string>)[bag[LEAD_KEY] as string] : '',
     });
     const wa = $<HTMLAnchorElement>(rep, '.lt-wa');
     wa.href = whatsappLink(msg);

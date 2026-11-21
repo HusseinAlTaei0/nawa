@@ -1,6 +1,6 @@
 ---
 /**
- * "اكتشف ليش تخسر زبائنك": هيكل الصفحة الثابت. المحتوى المتغير يبنيه src/scripts/launch/ui.ts.
+ * التشخيص (/launch): هيكل الصفحة الثابت، مشترك بين فروع نوى. المحتوى المتغير يبنيه src/scripts/launch/ui.ts.
  *
  * - كل مرحلة <section data-screen> واحدة ظاهرة في كل وقت
  * - نصوص لغة الصفحة فقط تُمرَّر كـ JSON (حجم أقل، ولا نصوص داخل الـ bundle)
@@ -143,8 +143,8 @@ const r = c.report;
 
         <div class="lt-full">
           <div class="lt-nums">
-            <div><span class="lt-k">{r.numbers.lost}</span><b data-n="lost"></b><span class="muted lt-small">{r.numbers.perMonth}</span></div>
-            <div><span class="lt-k">{r.numbers.recoverable}</span><b data-n="recoverable"></b><span class="muted lt-small">{r.numbers.perMonth}</span></div>
+            <div><span class="lt-k">{r.numbers.lost}</span><b data-n="lost"></b><span class="muted lt-small">{r.numbers.perYear ?? r.numbers.perMonth}</span></div>
+            <div><span class="lt-k">{r.numbers.recoverable}</span><b data-n="recoverable"></b><span class="muted lt-small">{r.numbers.perYear ?? r.numbers.perMonth}</span></div>
             <div><span class="lt-k">{r.numbers.hours}</span><b data-n="hours"></b><span class="muted lt-small">{r.numbers.perMonth}</span></div>
             <div class="gold-n"><span class="lt-k">{r.numbers.money}</span><b data-n="money"></b><span class="muted lt-small">{r.numbers.perMonth}</span></div>
           </div>

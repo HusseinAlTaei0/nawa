@@ -22,8 +22,11 @@ const BASE = process.env.BASE || 'http://localhost:4321';
 const out = path.join(root, 'qa');
 mkdirSync(out, { recursive: true });
 
-const routes = ['', 'services/', 'services/ai-agents/', 'services/erp-systems/', 'work/', 'process/', 'about/', 'contact/', 'launch/', 'privacy/'];
-if (existsSync(path.join(root, 'dist/en/work/clinic-that-answers-itself/index.html'))) routes.push('work/clinic-that-answers-itself/');
+// المسارات تُقرأ من ناتج البناء حتى يعمل الفحص مع أي فرع من نوى (الخدمات ودراسات الحالة تختلف بين الفروع)
+const subdirs = (d) => (existsSync(d) ? readdirSync(d, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name) : []);
+const svcSlugs = subdirs(path.join(root, 'dist/en/services')).slice(0, 2);
+const workSlugs = subdirs(path.join(root, 'dist/en/work')).slice(0, 1);
+const routes = ['', 'services/', ...svcSlugs.map((s) => `services/${s}/`), 'work/', 'process/', 'about/', 'contact/', 'launch/', 'privacy/', ...workSlugs.map((s) => `work/${s}/`)];
 const sizes = [{ name: 'desktop', width: 1440, height: 900 }, { name: 'phone', width: 390, height: 844 }];
 const problems = [];
 const note = (where, msg) => { problems.push(`${where}: ${msg}`); };

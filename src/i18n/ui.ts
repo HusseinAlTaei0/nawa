@@ -1,6 +1,6 @@
 /**
- * نصوص الواجهة المشتركة (القائمة، الأزرار، الفوتر) باللغتين + دوال مساعدة للروابط.
- * نصوص الصفحات نفسها موجودة في src/data/.
+ * دوال مساعدة للغة والروابط والعناوين.
+ * النصوص نفسها في الفرع الفعّال: src/data/divisions/<division>/ (انظر src/data/division.ts).
  */
 import type { Lang } from '../config/site';
 
@@ -19,73 +19,9 @@ export function switchLangPath(pathname: string, to: Lang): string {
   return `/${to}/${rest}`;
 }
 
-export const ui = {
-  en: {
-    siteTitle: 'NAWA · AI agency in Baghdad',
-    siteDescription: 'NAWA builds AI agents, automation, websites, ERP and SaaS products, and brands for companies in Iraq and the Middle East.',
-    skip: 'Skip to content',
-    nav: { services: 'Services', work: 'Work', process: 'Process', about: 'About', contact: 'Contact' },
-    // الدعوة الرئيسية في كل الموقع تؤدي لاختبار "اكتشف ليش تخسر زبائنك" (/launch)
-    cta: 'Discover why you are losing customers',
-    ctaB: 'How many customers did you lose this week?', // المنافس في اختبار A/B
-    ctaShort: 'Why you lose customers',
-    privacy: 'Privacy',
-    whatsapp: 'WhatsApp',
-    langSwitch: 'العربية',
-    langSwitchLabel: 'التبديل إلى العربية',
-    menu: 'Menu',
-    close: 'Close',
-    more: 'Learn more',
-    prev: 'Previous',
-    next: 'Next',
-    sample: 'Sample content',
-    sampleNote: 'Sample content for the template. It is hidden on the live site until real, approved content replaces it.',
-    footer: {
-      tagline: 'We build intelligence that works.',
-      explore: 'Explore',
-      services: 'Services',
-      contact: 'Contact',
-      motionOn: 'Motion: on',
-      motionOff: 'Motion: off',
-      motionLabel: 'Turn background motion on or off',
-      rights: 'All rights reserved.',
-      credits: 'Jupiter and Saturn images: NASA/JPL.',
-    },
-    waDefault: 'Hello NAWA, I would like to start a project.',
-  },
-  ar: {
-    siteTitle: 'نوى · وكالة ذكاء اصطناعي في بغداد',
-    siteDescription: 'نوى تبني وكلاء ذكاء اصطناعي وأتمتة ومواقع وأنظمة ERP ومنتجات SaaS وهويات للشركات في العراق والشرق الأوسط.',
-    skip: 'انتقل إلى المحتوى',
-    nav: { services: 'الخدمات', work: 'الأعمال', process: 'طريقة العمل', about: 'من نحن', contact: 'تواصل' },
-    cta: 'اكتشف ليش تخسر زبائنك',
-    ctaB: 'كم زبون ضاع منك هالأسبوع؟',
-    ctaShort: 'ليش تخسر زبائنك؟',
-    privacy: 'الخصوصية',
-    whatsapp: 'واتساب',
-    langSwitch: 'English',
-    langSwitchLabel: 'Switch to English',
-    menu: 'القائمة',
-    close: 'إغلاق',
-    more: 'اعرف أكثر',
-    prev: 'السابق',
-    next: 'التالي',
-    sample: 'محتوى تجريبي',
-    sampleNote: 'محتوى تجريبي لملء القالب. لا يظهر في الموقع الحي إلى أن يُستبدل بمحتوى حقيقي ومعتمد.',
-    footer: {
-      tagline: 'نبني ذكاء يشتغل.',
-      explore: 'تصفّح',
-      services: 'الخدمات',
-      contact: 'تواصل',
-      motionOn: 'الحركة: مفعّلة',
-      motionOff: 'الحركة: متوقفة',
-      motionLabel: 'تشغيل أو إيقاف حركة الخلفية',
-      rights: 'جميع الحقوق محفوظة.',
-      credits: 'صور المشتري وزحل: NASA/JPL.',
-    },
-    waDefault: 'مرحباً نوى، أريد أن أبدأ مشروعاً.',
-  },
-} as const;
+// نصوص الواجهة تأتي من الفرع الفعّال (src/data/division.ts)
+export { ui } from '../data/division';
+
 
 /** يحوّل *كلمة* داخل عنوان إلى <em> (العبارة الذهبية الوحيدة في العنوان) */
 export function gold(text: string): string {

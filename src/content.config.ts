@@ -1,13 +1,14 @@
 /**
- * مجموعة "الأعمال" (دراسات الحالة). كل دراسة = ملف Markdown في src/content/work/<lang>/<slug>.md
+ * مجموعة "الأعمال" (دراسات الحالة). كل دراسة = ملف Markdown في src/content/work/<division>/<lang>/<slug>.md
  * draft: true (الافتراضي) = محتوى تجريبي لا يظهر في الموقع الحي. اجعلها false عند اعتماد الدراسة.
  */
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
+import { site } from './config/site';
 
 const work = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/work' }),
+  loader: glob({ pattern: '**/*.md', base: `./src/content/work/${site.division}` }),
   schema: z.object({
     title: z.string(),
     lang: z.enum(['en', 'ar']),
